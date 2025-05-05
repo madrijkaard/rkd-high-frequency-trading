@@ -1,6 +1,8 @@
 use actix_web::{App, HttpServer};
 
 mod service;
+mod dto;
+
 use service::get_max_and_min_prices;
 
 #[actix_web::main]

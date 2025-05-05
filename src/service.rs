@@ -1,30 +1,8 @@
 use actix_web::{get, HttpResponse, Responder};
-use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use serde_json::Value;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Candlestick {
-    pub open_time: u64,
-    pub open_price: String,
-    pub high_price: String,
-    pub low_price: String,
-    pub close_price: String,
-    pub volume: String,
-    pub close_time: u64,
-    pub quote_asset_volume: String,
-    pub number_of_trades: u64,
-    pub taker_buy_base_asset_volume: String,
-    pub taker_buy_quote_asset_volume: String,
-    pub ignore: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CandlestickStats {
-    total: usize,
-    max_high_price: String,
-    min_low_price: String,
-}
+use crate::dto::{Candlestick, MaxMinPrice};
 
 #[get("/candlesticks/max-and-min")]
 pub async fn get_max_and_min_prices() -> impl Responder {
@@ -65,7 +43,7 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     })
                     .collect();
 
-                let total = candlesticks.len();
+                let of = candlesticks.len();
 
                 let max_high_price = candlesticks
                     .iter()
@@ -77,13 +55,20 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     .filter_map(|c| c.low_price.parse::<f64>().ok())
                     .fold(f64::MAX, f64::min);
 
-                let stats = CandlestickStats {
-                    total,
+                let current_price = candlesticks
+                    .iter()
+                    .max_by_key(|c| c.close_time)
+                    .map(|c| c.close_price.clone())
+                    .unwrap_or_else(|| "0.0".to_string());
+
+                let max_min_price = MaxMinPrice {
                     max_high_price: format!("{:.2}", max_high_price),
                     min_low_price: format!("{:.2}", min_low_price),
+                    current_price,
+                    of,
                 };
 
-                HttpResponse::Ok().json(stats)
+                HttpResponse::Ok().json(max_min_price)
             }
             Err(e) => {
                 eprintln!("Erro ao deserializar JSON da Binance: {:?}", e);
