@@ -1,31 +1,40 @@
-use crate::dto::MaxMinPrice;
+use crate::dto::Trade;
 
-pub fn calcular_max_min_price(
+pub fn generate_trade_zones(
     max_high: f64,
     min_low: f64,
-    current_price: f64,
+    current_price: String,
     of: usize,
-) -> MaxMinPrice {
-    
-    let log_range = (max_high.ln()) - (min_low.ln());
-    let log_base = min_low.ln();
+) -> Trade {
+    let log_min = min_low.ln();
+    let log_max = max_high.ln();
+    let log_middle = (log_min + log_max) / 2.0;
+    let log_mid_min = (log_min + log_middle) / 2.0;
+    let log_mid_max = (log_max + log_middle) / 2.0;
+    let log_mid_min_inner = (log_mid_min + log_middle) / 2.0;
+    let log_mid_max_inner = (log_mid_max + log_middle) / 2.0;
+    let log_below_min = (log_min + log_mid_min) / 2.0;
+    let log_above_max = (log_max + log_mid_max) / 2.0;
 
-    let zone1 = (log_base + log_range / 4.0).exp();
-    let zone2 = (log_base + log_range / 2.0).exp();
-    let zone3 = (log_base + 3.0 * log_range / 4.0).exp();
+    let price_middle = log_middle.exp();
+    let price_mid_min = log_mid_min.exp();
+    let price_mid_max = log_mid_max.exp();
+    let price_mid_min_inner = log_mid_min_inner.exp();
+    let price_mid_max_inner = log_mid_max_inner.exp();
+    let price_below_min = log_below_min.exp();
+    let price_above_max = log_above_max.exp();
 
-    let mid_zone1_zone2 = (zone1 + zone2) / 2.0;
-    let mid_zone2_zone3 = (zone2 + zone3) / 2.0;
-
-    let intermediate_price_1 = (zone1 + mid_zone1_zone2) / 2.0;
-    let intermediate_price_2 = (zone3 + mid_zone2_zone3) / 2.0;
-
-    MaxMinPrice {
-        max_high_price: format!("{:.2}", max_high),
-        min_low_price: format!("{:.2}", min_low),
-        current_price: format!("{:.2}", current_price),
-        intermediate_price_1: format!("{:.2}", intermediate_price_1),
-        intermediate_price_2: format!("{:.2}", intermediate_price_2),
+    Trade {
+        max_high_price: format!("{:.8}", max_high),
+        min_low_price: format!("{:.8}", min_low),
+        zone_4: format!("{:.8}", price_middle),
+        zone_2: format!("{:.8}", price_mid_min),
+        line_mid_max: format!("{:.8}", price_mid_max),
+        zone_3: format!("{:.8}", price_mid_min_inner),
+        zone_5: format!("{:.8}", price_mid_max_inner),
+        line_above_max: format!("{:.8}", price_above_max),
+        zone_1: format!("{:.8}", price_below_min),
+        current_price,
         of,
     }
 }
