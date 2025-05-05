@@ -2,7 +2,8 @@ use actix_web::{get, HttpResponse, Responder};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::dto::{Candlestick, MaxMinPrice};
+use crate::dto::Candlestick;
+use crate::calculos::calcular_max_min_price;
 
 #[get("/candlesticks/max-and-min")]
 pub async fn get_max_and_min_prices() -> impl Responder {
@@ -61,12 +62,14 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     .map(|c| c.close_price.clone())
                     .unwrap_or_else(|| "0.0".to_string());
 
-                let max_min_price = MaxMinPrice {
-                    max_high_price: format!("{:.2}", max_high_price),
-                    min_low_price: format!("{:.2}", min_low_price),
-                    current_price,
+                let current_price_f64 = current_price.parse::<f64>().unwrap_or(0.0);
+
+                let max_min_price = calcular_max_min_price(
+                    max_high_price,
+                    min_low_price,
+                    current_price_f64,
                     of,
-                };
+                );
 
                 HttpResponse::Ok().json(max_min_price)
             }

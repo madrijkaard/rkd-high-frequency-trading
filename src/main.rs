@@ -2,6 +2,7 @@ use actix_web::{App, HttpServer};
 
 mod service;
 mod dto;
+mod calculos;
 
 use service::get_max_and_min_prices;
 

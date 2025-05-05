@@ -21,5 +21,7 @@ pub struct MaxMinPrice {
     pub max_high_price: String,
     pub min_low_price: String,
     pub current_price: String,
+    pub intermediate_price_1: String,
+    pub intermediate_price_2: String,
     pub of: usize,
 }
