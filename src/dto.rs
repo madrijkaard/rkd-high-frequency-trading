@@ -18,15 +18,15 @@ pub struct Candlestick {
 
 #[derive(Debug, Serialize)]
 pub struct Trade {
-    pub max_high_price: String,
-    pub min_low_price: String,
-    pub zone_4: String,
-    pub zone_2: String,
-    pub line_mid_max: String,
-    pub zone_3: String,
+    pub zone_max: String,
+    pub zone_7: String,
+    pub zone_6: String,
     pub zone_5: String,
-    pub line_above_max: String,
+    pub zone_4: String,
+    pub zone_3: String,
+    pub zone_2: String,
     pub zone_1: String,
+    pub zone_min: String,
     pub current_price: String,
     pub of: usize, 
 }

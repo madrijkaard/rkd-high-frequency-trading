@@ -25,15 +25,15 @@ pub fn generate_trade_zones(
     let price_above_max = log_above_max.exp();
 
     Trade {
-        max_high_price: format!("{:.8}", max_high),
-        min_low_price: format!("{:.8}", min_low),
-        zone_4: format!("{:.8}", price_middle),
-        zone_2: format!("{:.8}", price_mid_min),
-        line_mid_max: format!("{:.8}", price_mid_max),
-        zone_3: format!("{:.8}", price_mid_min_inner),
+        zone_max: format!("{:.8}", max_high),
+        zone_7: format!("{:.8}", price_above_max),
+        zone_6: format!("{:.8}", price_mid_max),
         zone_5: format!("{:.8}", price_mid_max_inner),
-        line_above_max: format!("{:.8}", price_above_max),
+        zone_4: format!("{:.8}", price_middle),
+        zone_3: format!("{:.8}", price_mid_min_inner),
+        zone_2: format!("{:.8}", price_mid_min),
         zone_1: format!("{:.8}", price_below_min),
+        zone_min: format!("{:.8}", min_low),
         current_price,
         of,
     }
