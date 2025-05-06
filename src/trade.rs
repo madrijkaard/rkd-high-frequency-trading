@@ -1,6 +1,7 @@
 use crate::dto::{Candlestick, Trade};
 
 pub fn generate_trade(candlesticks: Vec<Candlestick>) -> Trade {
+    
     let of = candlesticks.len();
 
     let max_high = candlesticks

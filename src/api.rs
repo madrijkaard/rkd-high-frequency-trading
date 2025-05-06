@@ -2,16 +2,22 @@ use actix_web::{get, HttpResponse, Responder};
 use reqwest::Client;
 use serde_json::Value;
 
+use crate::config::Settings;
 use crate::dto::Candlestick;
 use crate::trade::generate_trade;
 
 #[get("/trades/load")]
 pub async fn get_max_and_min_prices() -> impl Responder {
+    
+    let settings = Settings::load();
+    let binance = settings.binance;
+
     let url = "https://api.binance.com/api/v3/uiKlines";
+    
     let params = [
-        ("symbol", "BTCUSDT"),
-        ("interval", "1h"),
-        ("limit", "200"),
+        ("symbol", binance.symbol.as_str()),
+        ("interval", binance.interval.as_str()),
+        ("limit", &binance.limit.to_string()),
     ];
 
     let client = Client::new();
@@ -48,13 +54,13 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                 HttpResponse::Ok().json(trade)
             }
             Err(e) => {
-                eprintln!("Error deserializing JSON from Binance: {:?}", e);
-                HttpResponse::InternalServerError().body("Error processing response from Binance")
+                eprintln!("Erro ao desserializar JSON da Binance: {:?}", e);
+                HttpResponse::InternalServerError().body("Erro ao processar resposta da Binance")
             }
         },
         Err(e) => {
-            eprintln!("Error in HTTP request: {:?}", e);
-            HttpResponse::InternalServerError().body("Error accessing Binance API")
+            eprintln!("Erro na requisição HTTP: {:?}", e);
+            HttpResponse::InternalServerError().body("Erro ao acessar API da Binance")
         }
     }
 }

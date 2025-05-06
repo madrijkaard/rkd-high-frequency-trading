@@ -1,9 +1,9 @@
-use actix_web::{App, HttpServer};
-
 mod dto;
 mod api;
 mod trade;
+mod config;
 
+use actix_web::{App, HttpServer};
 use api::get_max_and_min_prices;
 
 #[actix_web::main]

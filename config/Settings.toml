@@ -1,0 +1,4 @@
+[binance]
+symbol = "BTCUSDT"
+interval = "1h"
+limit = 200
