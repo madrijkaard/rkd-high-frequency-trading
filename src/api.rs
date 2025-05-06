@@ -3,9 +3,9 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::dto::Candlestick;
-use crate::trade::generate_trade_zones;
+use crate::trade::generate_trade;
 
-#[get("/candlesticks/max-and-min")]
+#[get("/trades/load")]
 pub async fn get_max_and_min_prices() -> impl Responder {
     let url = "https://api.binance.com/api/v3/uiKlines";
     let params = [
@@ -62,7 +62,7 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     .map(|c| c.close_price.clone())
                     .unwrap_or_else(|| "0.0".to_string());
 
-                let trade = generate_trade_zones(
+                let trade = generate_trade(
                     max_high_price,
                     min_low_price,
                     current_price,
