@@ -44,41 +44,17 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     })
                     .collect();
 
-                let of = candlesticks.len();
-
-                let max_high_price = candlesticks
-                    .iter()
-                    .filter_map(|c| c.high_price.parse::<f64>().ok())
-                    .fold(f64::MIN, f64::max);
-
-                let min_low_price = candlesticks
-                    .iter()
-                    .filter_map(|c| c.low_price.parse::<f64>().ok())
-                    .fold(f64::MAX, f64::min);
-
-                let current_price = candlesticks
-                    .iter()
-                    .max_by_key(|c| c.close_time)
-                    .map(|c| c.close_price.clone())
-                    .unwrap_or_else(|| "0.0".to_string());
-
-                let trade = generate_trade(
-                    max_high_price,
-                    min_low_price,
-                    current_price,
-                    of,
-                );
-
+                let trade = generate_trade(candlesticks);
                 HttpResponse::Ok().json(trade)
             }
             Err(e) => {
-                eprintln!("Erro ao deserializar JSON da Binance: {:?}", e);
-                HttpResponse::InternalServerError().body("Erro ao processar resposta da Binance")
+                eprintln!("Error deserializing JSON from Binance: {:?}", e);
+                HttpResponse::InternalServerError().body("Error processing response from Binance")
             }
         },
         Err(e) => {
-            eprintln!("Erro na requisição HTTP: {:?}", e);
-            HttpResponse::InternalServerError().body("Erro ao acessar a API da Binance")
+            eprintln!("Error in HTTP request: {:?}", e);
+            HttpResponse::InternalServerError().body("Error accessing Binance API")
         }
     }
 }

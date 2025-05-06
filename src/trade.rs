@@ -1,11 +1,24 @@
-use crate::dto::Trade;
+use crate::dto::{Candlestick, Trade};
 
-pub fn generate_trade(
-    max_high: f64,
-    min_low: f64,
-    current_price: String,
-    of: usize,
-) -> Trade {
+pub fn generate_trade(candlesticks: Vec<Candlestick>) -> Trade {
+    let of = candlesticks.len();
+
+    let max_high = candlesticks
+        .iter()
+        .filter_map(|c| c.high_price.parse::<f64>().ok())
+        .fold(f64::MIN, f64::max);
+
+    let min_low = candlesticks
+        .iter()
+        .filter_map(|c| c.low_price.parse::<f64>().ok())
+        .fold(f64::MAX, f64::min);
+
+    let current_price = candlesticks
+        .iter()
+        .max_by_key(|c| c.close_time)
+        .map(|c| c.close_price.clone())
+        .unwrap_or_else(|| "0.0".to_string());
+
     let log_min = min_low.ln();
     let log_max = max_high.ln();
     let log_zone_4 = (log_min + log_max) / 2.0;
