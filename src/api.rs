@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::dto::Candlestick;
-use crate::calculos::generate_trade_zones;
+use crate::trade::generate_trade_zones;
 
 #[get("/candlesticks/max-and-min")]
 pub async fn get_max_and_min_prices() -> impl Responder {

@@ -1,10 +1,10 @@
 use actix_web::{App, HttpServer};
 
-mod service;
+mod api;
 mod dto;
-mod calculos;
+mod trade;
 
-use service::get_max_and_min_prices;
+use api::get_max_and_min_prices;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
