@@ -8,7 +8,7 @@ use crate::trade::generate_trade;
 use crate::state::BLOCKCHAIN;
 
 #[get("/trades/start")]
-pub async fn get_max_and_min_prices() -> impl Responder {
+pub async fn get_trades_start() -> impl Responder {
 
     let settings = Settings::load();
     let binance = settings.binance;
