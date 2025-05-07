@@ -5,13 +5,13 @@ use serde_json::Value;
 use crate::config::Settings;
 use crate::dto::Candlestick;
 use crate::trade::generate_trade;
+use crate::state::BLOCKCHAIN;
 
 #[get("/trades/load")]
 pub async fn get_max_and_min_prices() -> impl Responder {
-    
+
     let settings = Settings::load();
     let binance = settings.binance;
-
     let url = format!("{}/uiKlines", binance.base_url);
 
     let params = [
@@ -51,6 +51,12 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                     .collect();
 
                 let trade = generate_trade(candlesticks);
+
+                {
+                    let mut chain = BLOCKCHAIN.lock().unwrap();
+                    chain.add_block(trade.clone());
+                }
+
                 HttpResponse::Ok().json(trade)
             }
             Err(e) => {
@@ -62,5 +68,17 @@ pub async fn get_max_and_min_prices() -> impl Responder {
             eprintln!("Erro na requisição HTTP: {:?}", e);
             HttpResponse::InternalServerError().body("Erro ao acessar a API da Binance")
         }
+    }
+}
+
+#[get("/trades/chain")]
+pub async fn get_blockchain() -> impl Responder {
+    
+    let chain = BLOCKCHAIN.lock().unwrap();
+
+    if chain.is_valid() {
+        HttpResponse::Ok().json(chain.all())
+    } else {
+        HttpResponse::InternalServerError().body("Blockchain inválida: integridade comprometida.")
     }
 }

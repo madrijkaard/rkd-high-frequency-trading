@@ -16,7 +16,7 @@ pub struct Candlestick {
     pub ignore: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Trade {
     pub zone_max: String,
     pub zone_7: String,
@@ -28,5 +28,5 @@ pub struct Trade {
     pub zone_1: String,
     pub zone_min: String,
     pub current_price: String,
-    pub of: usize, 
+    pub of: usize,
 }
