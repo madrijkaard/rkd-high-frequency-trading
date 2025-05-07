@@ -7,7 +7,7 @@ use crate::dto::Candlestick;
 use crate::trade::generate_trade;
 use crate::state::BLOCKCHAIN;
 
-#[get("/trades/load")]
+#[get("/trades/start")]
 pub async fn get_max_and_min_prices() -> impl Responder {
 
     let settings = Settings::load();
