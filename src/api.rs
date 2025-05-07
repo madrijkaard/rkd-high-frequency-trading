@@ -54,13 +54,13 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                 HttpResponse::Ok().json(trade)
             }
             Err(e) => {
-                eprintln!("Erro ao desserializar JSON da Binance: {:?}", e);
-                HttpResponse::InternalServerError().body("Erro ao processar resposta da Binance")
+                eprintln!("Error deserializing JSON from Binance: {:?}", e);
+                HttpResponse::InternalServerError().body("Error processing response from Binance")
             }
         },
         Err(e) => {
-            eprintln!("Erro na requisição HTTP: {:?}", e);
-            HttpResponse::InternalServerError().body("Erro ao acessar API da Binance")
+            eprintln!("Error in HTTP request: {:?}", e);
+            HttpResponse::InternalServerError().body("Error accessing Binance API")
         }
     }
 }
