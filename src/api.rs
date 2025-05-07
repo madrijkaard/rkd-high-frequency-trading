@@ -12,8 +12,8 @@ pub async fn get_max_and_min_prices() -> impl Responder {
     let settings = Settings::load();
     let binance = settings.binance;
 
-    let url = "https://api.binance.com/api/v3/uiKlines";
-    
+    let url = format!("{}/uiKlines", binance.base_url);
+
     let params = [
         ("symbol", binance.symbol.as_str()),
         ("interval", binance.interval.as_str()),
@@ -21,7 +21,7 @@ pub async fn get_max_and_min_prices() -> impl Responder {
     ];
 
     let client = Client::new();
-    let response = client.get(url).query(&params).send().await;
+    let response = client.get(&url).query(&params).send().await;
 
     match response {
         Ok(resp) => match resp.json::<Vec<Vec<Value>>>().await {
@@ -54,13 +54,13 @@ pub async fn get_max_and_min_prices() -> impl Responder {
                 HttpResponse::Ok().json(trade)
             }
             Err(e) => {
-                eprintln!("Error deserializing JSON from Binance: {:?}", e);
-                HttpResponse::InternalServerError().body("Error processing response from Binance")
+                eprintln!("Erro ao desserializar JSON da Binance: {:?}", e);
+                HttpResponse::InternalServerError().body("Erro ao processar resposta da Binance")
             }
         },
         Err(e) => {
-            eprintln!("Error in HTTP request: {:?}", e);
-            HttpResponse::InternalServerError().body("Error accessing Binance API")
+            eprintln!("Erro na requisição HTTP: {:?}", e);
+            HttpResponse::InternalServerError().body("Erro ao acessar a API da Binance")
         }
     }
 }

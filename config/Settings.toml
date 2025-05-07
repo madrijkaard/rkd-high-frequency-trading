@@ -1,4 +1,5 @@
 [binance]
+base_url = "https://api.binance.com/api/v3"
 symbol = "BTCUSDT"
 interval = "1h"
 limit = 200
