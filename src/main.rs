@@ -6,7 +6,7 @@ mod blockchain;
 mod state;
 
 use actix_web::{App, HttpServer};
-use api::{get_trades_start, get_blockchain};
+use api::{get_trades_start, get_trades_chain};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -14,7 +14,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .service(get_trades_start)
-            .service(get_blockchain)
+            .service(get_trades_chain)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

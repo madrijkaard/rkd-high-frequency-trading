@@ -72,7 +72,7 @@ pub async fn get_trades_start() -> impl Responder {
 }
 
 #[get("/trades/chain")]
-pub async fn get_blockchain() -> impl Responder {
+pub async fn get_trades_chain() -> impl Responder {
     
     let chain = BLOCKCHAIN.lock().unwrap();
 
