@@ -12,6 +12,7 @@ pub async fn get_trades_start() -> impl Responder {
 
     let settings = Settings::load();
     let binance = settings.binance;
+    
     let url = format!("{}/uiKlines", binance.base_url);
 
     let params = [
