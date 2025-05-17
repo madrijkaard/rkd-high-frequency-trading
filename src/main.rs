@@ -6,6 +6,7 @@ mod blockchain;
 mod order;
 mod balance;
 mod client;
+mod credential;
 
 use actix_web::{App, HttpServer};
 use api::{

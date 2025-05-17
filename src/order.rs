@@ -1,8 +1,11 @@
 ﻿use crate::balance::{get_futures_balance, BalanceResponse};
 use crate::client::{get_current_btc_price, get_lot_size_info};
+use crate::credential::get_credentials;
 use hmac::{Hmac, Mac};
-use reqwest::Client;
-use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderValue};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, CONTENT_TYPE},
+    Client,
+};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::HashMap;
@@ -47,10 +50,8 @@ fn round_quantity(value: f64, step: f64) -> f64 {
 
 fn get_timestamp() -> u64 {
     let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Erro ao obter timestamp");
-    since_the_epoch.as_millis() as u64
+    let since = start.duration_since(UNIX_EPOCH).unwrap();
+    since.as_millis() as u64
 }
 
 fn sign_query(query: &str, secret: &str) -> String {
@@ -59,12 +60,37 @@ fn sign_query(query: &str, secret: &str) -> String {
     hex::encode(mac.finalize().into_bytes())
 }
 
+async fn get_server_time_offset() -> Result<i64, String> {
+    let client = Client::new();
+    let res = client
+        .get("https://fapi.binance.com/fapi/v1/time")
+        .send()
+        .await
+        .map_err(|e| format!("Erro ao consultar /time: {:?}", e))?;
+
+    let json: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Erro ao parsear /time: {:?}", e))?;
+
+    let server_time = json["serverTime"].as_i64().ok_or("Campo serverTime ausente")?;
+    let local_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "Erro no relógio local")?
+        .as_millis() as i64;
+
+    Ok(server_time - local_time)
+}
+
 pub async fn execute_future_order() -> Result<OrderResponse, String> {
-    let api_key = "TESTE";
-    let secret_key = "TESTE";
+    let credentials = get_credentials();
+    let api_key = &credentials.key;
+    let secret_key = &credentials.secret;
 
     let base_url = "https://fapi.binance.com/fapi/v1/order";
-    let timestamp = get_timestamp();
+
+    let offset = get_server_time_offset().await.unwrap_or(0);
+    let timestamp = (get_timestamp() as i64 + offset) as u64;
     let timestamp_str = timestamp.to_string();
 
     let preco_btc = get_current_btc_price().await?;
@@ -94,21 +120,21 @@ pub async fn execute_future_order() -> Result<OrderResponse, String> {
         .to_string();
 
     println!(
-        "→ Enviando ordem com quantity: '{}' (USDT: {}, Preço BTC: {}, StepSize: {})",
+        "→ Enviando ordem com quantity: '{}' (USDT: {}, Preco BTC: {}, StepSize: {})",
         quantity_str, available_usdt, preco_btc, lot_size_info.step_size
     );
 
     let notional = quantity * preco_btc;
     if notional < 20.0 {
         return Err(format!(
-            "Valor total da ordem ({:.2} USDT) é menor que o mínimo exigido (20 USDT).",
+            "Valor total da ordem ({:.2} USDT) e menor que o minimo exigido (20 USDT).",
             notional
         ));
     }
 
     let mut params = HashMap::new();
     params.insert("symbol", "ETHUSDT");
-    params.insert("side", "BUY");
+    params.insert("side", "SELL");
     params.insert("type", "MARKET");
     params.insert("quantity", &quantity_str);
     params.insert("recvWindow", "10000");
@@ -132,7 +158,7 @@ pub async fn execute_future_order() -> Result<OrderResponse, String> {
         .headers(headers)
         .send()
         .await
-        .map_err(|e| format!("Erro de requisição: {:?}", e))?;
+        .map_err(|e| format!("Erro de requisicao: {:?}", e))?;
 
     if res.status().is_success() {
         res.json::<OrderResponse>()

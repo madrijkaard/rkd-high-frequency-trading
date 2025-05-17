@@ -1,8 +1,13 @@
 use hmac::{Hmac, Mac};
-use reqwest::{Client, header::{HeaderMap, HeaderValue, CONTENT_TYPE}};
+use reqwest::{
+    header::{HeaderMap, HeaderValue, CONTENT_TYPE},
+    Client,
+};
 use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use crate::credential::get_credentials;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -30,11 +35,12 @@ fn sign_query(query: &str, secret: &str) -> String {
 }
 
 pub async fn get_futures_balance() -> Result<Vec<BalanceResponse>, Box<dyn std::error::Error>> {
-    let api_key = "28wl2T2FOmgMFtz9dqyhBhoAHNPEn6QmphxA1BB8yo8VxjOyfiKVPYOiDTx3oNTx";
-    let secret_key = "ZEmIDUsG3GjiF70FkOof7e36A4FZZ4aoQSA0Mb6YJtdU8sxNONaC57pd5wk2vsgM";
+    let credentials = get_credentials();
+    let api_key = &credentials.key;
+    let secret_key = &credentials.secret;
 
     let timestamp = get_timestamp();
-    let query = format!("timestamp={}", timestamp);
+    let query = format!("recvWindow=10000&timestamp={}", timestamp);
     let signature = sign_query(&query, secret_key);
     let full_query = format!("{}&signature={}", query, signature);
 
