@@ -1,7 +1,8 @@
 use crate::config::BinanceSettings;
-use crate::dto::Candlestick;
+use crate::dto::{
+    Candlestick, ExchangeInfoResponse, LotSizeFilter, LotSizeInfo,
+};
 use reqwest::Client;
-use serde::Deserialize;
 use serde_json::Value;
 
 pub async fn get_candlesticks(settings: &BinanceSettings) -> Result<Vec<Candlestick>, String> {
@@ -82,32 +83,6 @@ pub async fn get_current_btc_price() -> Result<f64, String> {
             .unwrap_or_else(|_| "Erro desconhecido".to_string());
         Err(format!("Erro ao buscar preco do BTC: {}", err))
     }
-}
-
-#[derive(Debug, Deserialize)]
-struct ExchangeInfoResponse {
-    symbols: Vec<SymbolInfo>,
-}
-
-#[derive(Debug, Deserialize)]
-struct SymbolInfo {
-    filters: Vec<LotSizeFilter>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(tag = "filterType")]
-enum LotSizeFilter {
-    #[serde(rename = "LOT_SIZE")]
-    LotSize {
-        #[serde(rename = "stepSize")]
-        step_size: String,
-    },
-    #[serde(other)]
-    Other,
-}
-
-pub struct LotSizeInfo {
-    pub step_size: f64,
 }
 
 pub async fn get_lot_size_info() -> Result<LotSizeInfo, String> {

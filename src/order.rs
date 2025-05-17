@@ -1,48 +1,18 @@
-﻿use crate::balance::{get_futures_balance, BalanceResponse};
+﻿use crate::balance::get_futures_balance;
 use crate::client::{get_current_btc_price, get_lot_size_info};
 use crate::credential::get_credentials;
+use crate::dto::{BalanceResponse, OrderResponse};
 use hmac::{Hmac, Mac};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE},
     Client,
 };
-use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 use url::form_urlencoded;
 
 type HmacSha256 = Hmac<Sha256>;
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct OrderResponse {
-    pub symbol: String,
-
-    #[serde(rename = "orderId")]
-    pub order_id: u64,
-
-    pub status: String,
-    pub side: String,
-    pub price: String,
-
-    #[serde(rename = "origQty")]
-    pub orig_qty: String,
-
-    #[serde(rename = "executedQty")]
-    pub executed_qty: String,
-
-    #[serde(rename = "cummulativeQuoteQty")]
-    pub cummulative_quote_qty: Option<String>,
-
-    #[serde(rename = "timeInForce")]
-    pub time_in_force: String,
-
-    #[serde(rename = "type")]
-    pub order_type: String,
-
-    #[serde(rename = "updateTime")]
-    pub update_time: u64,
-}
 
 fn round_quantity(value: f64, step: f64) -> f64 {
     (value / step).floor() * step

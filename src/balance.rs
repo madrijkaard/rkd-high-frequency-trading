@@ -3,24 +3,13 @@ use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE},
     Client,
 };
-use serde::{Deserialize, Serialize};
 use sha2::Sha256;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::credential::get_credentials;
+use crate::dto::BalanceResponse;
 
 type HmacSha256 = Hmac<Sha256>;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BalanceResponse {
-    pub asset: String,
-
-    #[serde(rename = "balance")]
-    pub total: String,
-
-    #[serde(rename = "availableBalance")]
-    pub available: String,
-}
 
 fn get_timestamp() -> u64 {
     let start = SystemTime::now();

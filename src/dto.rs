@@ -59,3 +59,70 @@ pub enum TradeStatus {
     ShortZone5,
     TargetShortZone1,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ExchangeInfoResponse {
+    pub symbols: Vec<SymbolInfo>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SymbolInfo {
+    pub filters: Vec<LotSizeFilter>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(tag = "filterType")]
+pub enum LotSizeFilter {
+    #[serde(rename = "LOT_SIZE")]
+    LotSize {
+        #[serde(rename = "stepSize")]
+        step_size: String,
+    },
+    #[serde(other)]
+    Other,
+}
+
+pub struct LotSizeInfo {
+    pub step_size: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BalanceResponse {
+    pub asset: String,
+
+    #[serde(rename = "balance")]
+    pub total: String,
+
+    #[serde(rename = "availableBalance")]
+    pub available: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct OrderResponse {
+    pub symbol: String,
+
+    #[serde(rename = "orderId")]
+    pub order_id: u64,
+
+    pub status: String,
+    pub side: String,
+    pub price: String,
+
+    #[serde(rename = "origQty")]
+    pub orig_qty: String,
+
+    #[serde(rename = "executedQty")]
+    pub executed_qty: String,
+
+    #[serde(rename = "cummulativeQuoteQty")]
+    pub cummulative_quote_qty: Option<String>,
+
+    #[serde(rename = "timeInForce")]
+    pub time_in_force: String,
+
+    #[serde(rename = "type")]
+    pub order_type: String,
+
+    #[serde(rename = "updateTime")]
+    pub update_time: u64,
+}
