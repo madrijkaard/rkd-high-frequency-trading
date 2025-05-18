@@ -1,5 +1,6 @@
 [binance]
 base_url = "https://api.binance.com/api/v3"
-symbol = "BTCUSDT"
+future_url = "https://fapi.binance.com/fapi/v1"
+symbol = "ETHUSDT"
 interval = "1h"
 limit = 224

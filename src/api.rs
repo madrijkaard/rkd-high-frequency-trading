@@ -8,7 +8,6 @@ use crate::trade::generate_trade;
 
 #[get("/trades/start")]
 pub async fn get_trades_start() -> impl Responder {
-
     let settings = Settings::load();
     let binance_settings = &settings.binance;
 
@@ -52,7 +51,10 @@ pub async fn get_last_trade() -> impl Responder {
 
 #[post("/trades/order")]
 pub async fn post_trades_order() -> impl Responder {
-    match execute_future_order().await {
+    let settings = Settings::load();
+    let binance_settings = &settings.binance;
+
+    match execute_future_order(binance_settings).await {
         Ok(order) => HttpResponse::Ok().json(order),
         Err(e) => {
             eprintln!("Erro ao enviar ordem para Binance: {}", e);

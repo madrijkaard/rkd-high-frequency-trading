@@ -3,6 +3,7 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 pub struct BinanceSettings {
     pub base_url: String,
+    pub future_url: String,
     pub symbol: String,
     pub interval: String,
     pub limit: u32,

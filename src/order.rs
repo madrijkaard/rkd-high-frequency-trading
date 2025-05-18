@@ -2,6 +2,7 @@
 use crate::client::{get_current_btc_price, get_lot_size_info};
 use crate::credential::get_credentials;
 use crate::dto::{BalanceResponse, OrderResponse};
+use crate::config::BinanceSettings;
 use hmac::{Hmac, Mac};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE},
@@ -52,12 +53,12 @@ async fn get_server_time_offset() -> Result<i64, String> {
     Ok(server_time - local_time)
 }
 
-pub async fn execute_future_order() -> Result<OrderResponse, String> {
+pub async fn execute_future_order(settings: &BinanceSettings) -> Result<OrderResponse, String> {
     let credentials = get_credentials();
     let api_key = &credentials.key;
     let secret_key = &credentials.secret;
 
-    let base_url = "https://fapi.binance.com/fapi/v1/order";
+    let base_url = format!("{}/order", settings.future_url);
 
     let offset = get_server_time_offset().await.unwrap_or(0);
     let timestamp = (get_timestamp() as i64 + offset) as u64;
@@ -103,7 +104,7 @@ pub async fn execute_future_order() -> Result<OrderResponse, String> {
     }
 
     let mut params = HashMap::new();
-    params.insert("symbol", "ETHUSDT");
+    params.insert("symbol", settings.symbol.as_str());
     params.insert("side", "SELL");
     params.insert("type", "MARKET");
     params.insert("quantity", &quantity_str);
