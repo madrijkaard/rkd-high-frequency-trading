@@ -1,0 +1,8 @@
+[binance]
+base_url = "https://api.binance.com/api/v3"
+future_url = "https://fapi.binance.com/fapi/v1"
+future_url_v2 = "https://fapi.binance.com/fapi/v2"
+symbol = "ETHUSDT"
+interval = "1h"
+limit = 272
+leverage = 1
