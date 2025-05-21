@@ -55,13 +55,13 @@ pub async fn set_leverage_with_value(
     if res.status().is_success() {
         let response = res.json::<LeverageResponse>().await?;
         println!(
-            "Alavancagem aplicada com sucesso: {}x para {}",
+            "Leverage successfully applied: {}x to {}",
             response.leverage, response.symbol
         );
         Ok(response)
     } else {
         let error_text = res.text().await?;
-        eprintln!("Erro ao aplicar alavancagem: {}", error_text);
-        Err(format!("Erro da Binance: {}", error_text).into())
+        eprintln!("Error applying leverage: {}", error_text);
+        Err(format!("Binance error: {}", error_text).into())
     }
 }

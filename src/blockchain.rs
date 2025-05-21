@@ -55,9 +55,9 @@ impl TradeBlockchain {
     }
 
     pub fn add_block(&mut self, trade: Trade) -> bool {
+        
         if let Some(last_trade) = self.get_last_trade() {
             if trade.status == last_trade.status {
-                println!("Status nao mudou. Bloco nao sera adicionado.");
                 return false;
             }
         }
@@ -70,12 +70,20 @@ impl TradeBlockchain {
         let new_block = TradeBlock::new(index, trade.clone(), previous_hash);
         self.chain.push(new_block);
 
+        println!();
+        println!();
+        println!();
+        
         println!(
-            "[{}] Novo bloco adicionado - Status: {:?}, Preco: {}",
+            "[{}] - New block added - Status: {:?}, Price: {}",
             chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
             trade.status,
             trade.current_price
         );
+
+        println!();
+        println!();
+        println!();
 
         true
     }

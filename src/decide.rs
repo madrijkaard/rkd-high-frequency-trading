@@ -11,7 +11,7 @@ pub fn decide(binance_settings: &BinanceSettings) {
         match chain.get_last_trade() {
             Some(t) => t,
             None => {
-                println!("Nenhum trade encontrado para decisao.");
+                println!("No trades found for decision");
                 return;
             }
         }
@@ -26,11 +26,11 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 if let Err(e) = set_leverage_with_value(&binance, 1).await {
-                    eprintln!("Erro ao ajustar alavancagem para 1 (status None): {}", e);
+                    eprintln!("Error setting leverage to 1 (status None): {}", e);
                 }
                 match close_all_positions(&binance).await {
-                    Ok(closed) => println!("Todas as posicoes fechadas (status None): {:?}", closed),
-                    Err(e) => eprintln!("Erro ao fechar posicoes (status None): {}", e),
+                    Ok(closed) => println!("All positions closed (status None): {:?}", closed),
+                    Err(e) => eprintln!("Error closing positions (status None): {}", e),
                 }
             });
         }
@@ -41,8 +41,8 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 match execute_future_order(&binance, "BUY").await {
-                    Ok(order) => println!("Ordem de COMPRA executada: {:?}", order),
-                    Err(e) => eprintln!("Erro ao executar ordem de COMPRA: {}", e),
+                    Ok(order) => println!("BUY order executed: {:?}", order),
+                    Err(e) => eprintln!("Error executing BUY order: {}", e),
                 }
             });
         }
@@ -53,8 +53,8 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 match execute_future_order(&binance, "SELL").await {
-                    Ok(order) => println!("Ordem de VENDA executada: {:?}", order),
-                    Err(e) => eprintln!("Erro ao executar ordem de VENDA: {}", e),
+                    Ok(order) => println!("SALE order executed: {:?}", order),
+                    Err(e) => eprintln!("Error executing SALE order: {}", e),
                 }
             });
         }
@@ -68,11 +68,11 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 if let Err(e) = set_leverage_with_value(&binance, 1).await {
-                    eprintln!("Erro ao ajustar alavancagem para 1: {}", e);
+                    eprintln!("Error setting leverage to 1: {}", e);
                 }
                 match close_all_positions(&binance).await {
-                    Ok(closed) => println!("Posicoes fechadas (lev 1): {:?}", closed),
-                    Err(e) => eprintln!("Erro ao fechar posicoes: {}", e),
+                    Ok(closed) => println!("Closed positions (lev 1): {:?}", closed),
+                    Err(e) => eprintln!("Error closing positions: {}", e),
                 }
             });
         }
@@ -82,11 +82,11 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 if let Err(e) = set_leverage_with_value(&binance, 2).await {
-                    eprintln!("Erro ao ajustar alavancagem para 2: {}", e);
+                    eprintln!("Error setting leverage to 2: {}", e);
                 }
                 match close_all_positions(&binance).await {
-                    Ok(closed) => println!("Posicoes fechadas (lev 2): {:?}", closed),
-                    Err(e) => eprintln!("Erro ao fechar posicoes: {}", e),
+                    Ok(closed) => println!("Closed positions (lev 2): {:?}", closed),
+                    Err(e) => eprintln!("Error closing positions: {}", e),
                 }
             });
         }
