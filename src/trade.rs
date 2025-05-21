@@ -111,16 +111,24 @@ pub fn calculate_moving_average(candles: &[Candlestick]) -> f64 {
 }
 
 pub fn update_status(mut trade: Trade, last: &Trade) -> Trade {
+
+    if trade.bias != last.bias {
+        trade.status = None;
+        return trade;
+    }
+    
     let current_price = parse(&trade.current_price);
 
     let zone_1 = parse(&trade.zone_1);
+    let zone_2 = parse(&trade.zone_2);
     let zone_3 = parse(&trade.zone_3);
     let zone_5 = parse(&trade.zone_5);
+    let zone_6 = parse(&trade.zone_6);
     let zone_7 = parse(&trade.zone_7);
 
     match trade.bias {
-        Bias::Bullish => handle_bullish_status(&mut trade, current_price, zone_1, zone_3, zone_5, zone_7, last),
-        Bias::Bearish => handle_bearish_status(&mut trade, current_price, zone_1, zone_3, zone_5, zone_7, last),
+        Bias::Bullish => handle_bullish_status(&mut trade, current_price, zone_1, zone_3, zone_5, zone_6, zone_7, last),
+        Bias::Bearish => handle_bearish_status(&mut trade, current_price, zone_1, zone_2, zone_3, zone_5, zone_7, last),
         Bias::None => {
             trade.status = None;
         }
@@ -135,14 +143,10 @@ fn handle_bullish_status(
     zone_1: f64,
     zone_3: f64,
     zone_5: f64,
+    zone_6: f64,
     zone_7: f64,
     _last: &Trade,
 ) {
-    if trade.bias != _last.bias {
-        trade.status = None;
-        return;
-    }
-
     if _last.status.is_none() && current_price >= zone_7 {
         trade.status = Some(TradeStatus::InZone7);
     } else if current_price > zone_5 && _last.status == Some(TradeStatus::InZone7) {
@@ -167,8 +171,10 @@ fn handle_bullish_status(
         trade.status = Some(TradeStatus::PrepareZone1);
     } else if current_price >= zone_7 && _last.status == Some(TradeStatus::LongZone3) {
         trade.status = Some(TradeStatus::TargetLongZone7);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::TargetLongZone7) {
-        trade.status = Some(TradeStatus::InZone7);
+    } else if current_price > zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
+        trade.status = Some(TradeStatus::TargetLongZone7);
+    } else if current_price <= zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
+        trade.status = None;
     } else if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone3) {
         trade.status = Some(TradeStatus::InZone7);
     }
@@ -178,16 +184,12 @@ fn handle_bearish_status(
     trade: &mut Trade,
     current_price: f64,
     zone_1: f64,
+    zone_2: f64,
     zone_3: f64,
     zone_5: f64,
     zone_7: f64,
     _last: &Trade,
 ) {
-    if trade.bias != _last.bias {
-        trade.status = None;
-        return;
-    }
-
     if _last.status.is_none() && current_price <= zone_1 {
         trade.status = Some(TradeStatus::InZone1);
     } else if current_price < zone_3 && _last.status == Some(TradeStatus::InZone1) {
@@ -212,8 +214,10 @@ fn handle_bearish_status(
         trade.status = Some(TradeStatus::PrepareZone7);
     } else if current_price <= zone_1 && _last.status == Some(TradeStatus::ShortZone5) {
         trade.status = Some(TradeStatus::TargetShortZone1);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::TargetShortZone1) {
-        trade.status = Some(TradeStatus::InZone1);
+    } else if current_price < zone_2 && _last.status == Some(TradeStatus::TargetShortZone1) {
+        trade.status = Some(TradeStatus::TargetShortZone1);
+    } else if current_price >= zone_2 && _last.status == Some(TradeStatus::TargetShortZone1) {
+        trade.status = None;
     } else if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone5) {
         trade.status = Some(TradeStatus::InZone1);
     }

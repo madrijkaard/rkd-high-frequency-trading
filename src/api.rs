@@ -12,7 +12,7 @@ pub async fn post_trades_start() -> impl Responder {
     let scheduler = get_scheduler();
     let mut scheduler = scheduler.lock().unwrap();
     scheduler.start();
-    HttpResponse::Ok().body("Temporizador iniciado.")
+    HttpResponse::Ok().body("Timer started")
 }
 
 #[post("/trades/stop")]
@@ -20,7 +20,7 @@ pub async fn post_trades_stop() -> impl Responder {
     let scheduler = get_scheduler();
     let mut scheduler = scheduler.lock().unwrap();
     scheduler.stop();
-    HttpResponse::Ok().body("Temporizador parado.")
+    HttpResponse::Ok().body("Timer stopped")
 }
 
 #[get("/trades/health-check")]
@@ -28,7 +28,7 @@ pub async fn get_trades_health_check() -> impl Responder {
     let scheduler = get_scheduler();
     let scheduler = scheduler.lock().unwrap();
     let status = if scheduler.is_active() { "UP" } else { "DOWN" };
-    HttpResponse::Ok().body(format!("Status: {}", status))
+    HttpResponse::Ok().body(format!("status: {}", status))
 }
 
 #[get("/trades/chain")]
@@ -38,7 +38,7 @@ pub async fn get_trades_chain() -> impl Responder {
     if chain.is_valid() {
         HttpResponse::Ok().json(chain.all())
     } else {
-        HttpResponse::InternalServerError().body("Blockchain inválida: integridade comprometida.")
+        HttpResponse::InternalServerError().body("Invalid blockchain: integrity compromised")
     }
 }
 
@@ -48,7 +48,7 @@ pub async fn get_last_trade() -> impl Responder {
 
     match chain.get_last_trade() {
         Some(trade) => HttpResponse::Ok().json(trade),
-        None => HttpResponse::NotFound().body("Nenhum trade encontrado na blockchain"),
+        None => HttpResponse::NotFound().body("No trades found on blockchain"),
     }
 }
 

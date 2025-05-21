@@ -21,8 +21,8 @@ impl Settings {
         config::Config::builder()
             .add_source(config::File::with_name("config/Settings").required(true))
             .build()
-            .expect("Falha ao carregar o arquivo de configuração")
+            .expect("Failed to load configuration file")
             .try_deserialize()
-            .expect("Falha ao desserializar configuração")
+            .expect("Failed to deserialize configuration")
     }
 }

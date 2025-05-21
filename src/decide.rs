@@ -92,10 +92,7 @@ pub fn decide(binance_settings: &BinanceSettings) {
         }
 
         _ => {
-            println!(
-                "Nenhuma acao tomada para status: {:?} com bias: {:?}",
-                trade.status, trade.bias
-            );
+            println!("No action taken for status: {:?} with bias: {:?}", trade.status, trade.bias);
         }
     }
 }
