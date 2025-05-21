@@ -7,16 +7,16 @@ use crate::leverage::set_leverage;
 use crate::order::{execute_future_order, close_all_positions};
 use crate::schedule::get_scheduler;
 
-#[get("/trades/start")]
-pub async fn get_trades_start() -> impl Responder {
+#[post("/trades/start")]
+pub async fn post_trades_start() -> impl Responder {
     let scheduler = get_scheduler();
     let mut scheduler = scheduler.lock().unwrap();
     scheduler.start();
     HttpResponse::Ok().body("Temporizador iniciado.")
 }
 
-#[get("/trades/stop")]
-pub async fn stop_schedule() -> impl Responder {
+#[post("/trades/stop")]
+pub async fn post_trades_stop() -> impl Responder {
     let scheduler = get_scheduler();
     let mut scheduler = scheduler.lock().unwrap();
     scheduler.stop();
@@ -24,7 +24,7 @@ pub async fn stop_schedule() -> impl Responder {
 }
 
 #[get("/trades/health-check")]
-pub async fn health_check() -> impl Responder {
+pub async fn get_trades_health_check() -> impl Responder {
     let scheduler = get_scheduler();
     let scheduler = scheduler.lock().unwrap();
     let status = if scheduler.is_active() { "UP" } else { "DOWN" };
