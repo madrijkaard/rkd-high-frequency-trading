@@ -1,15 +1,15 @@
 ﻿# rkd-high-frequency-trading
 
-> Algorithmic trading platform in **Rust** for automated operations on **Binance Futures** (BTCUSDT). The project exposes a REST API for external control and uses an internal blockchain to immutably record the entire decision history.
+> A high-performance algorithmic trading platform written in **Rust**, designed for automated operations on **Binance Futures** (ETHUSDT). It exposes a REST API for control, computes technical signals with moving averages and logarithmic zones, and logs decisions on an internal blockchain-like structure for auditability.
 
 ---
 
 ## Table of Contents
 
 * [Overview](#overview)
-* [High‑Level Flow](#high-level-flow)
-* [Trading Strategy](#trading-strategy)
-* [Software Architecture](#software-architecture)
+* [Architecture](#architecture)
+* [Strategy](#strategy)
+* [Flowchart](#flowchart)
 * [Tech Stack](#tech-stack)
 * [Installation](#installation)
 * [Configuration](#configuration)
@@ -24,29 +24,87 @@
 
 ## Overview
 
-This repository implements an **asynchronous trading bot** capable of:
+This bot operates on a **50-second schedule**, fetching recent candlesticks from Binance Futures and computing:
 
-1. Collecting Binance candlesticks every 50 s.
-2. Computing moving averages, logarithmic price zones, and determining the market *bias* (Bullish, Bearish, None).
-3. Storing every decision in an in‑memory **blockchain**, ensuring data integrity.
-4. Taking automatic actions:
+* **Two moving averages**: short-term and long-term.
+* **Logarithmic zones** based on the price range.
+* **Market bias** (Bullish, Bearish, or None).
 
-   * Opening LONG/SHORT positions.
-   * Closing all positions.
-   * Adjusting the symbol leverage.
-5. Exposing **REST endpoints** for monitoring and manual control.
+Decisions such as opening or closing positions and adjusting leverage are taken automatically based on a predefined **finite state machine**, and all trades are recorded immutably on an in-memory **blockchain**.
 
-> **Disclaimer** This project is for educational purposes only. Use it at your own risk.
+> **Disclaimer**: This project is for educational purposes only. Use at your own risk.
 
 ---
 
-## High‑Level Flow
+## Architecture
+
+* **Actix-Web**: Asynchronous HTTP server.
+* **Tokio**: Scheduler and runtime.
+* **Reqwest + HMAC-SHA256**: Secure requests to Binance.
+* **OnceCell**: Lazy-loaded singletons for configuration, credentials, and the blockchain.
+* **Mutex**: Thread-safe access to the blockchain.
+
+```
+├── src
+│   ├── api.rs            # REST endpoints
+│   ├── balance.rs        # Fetches Binance Futures balance
+│   ├── blockchain.rs     # In-memory blockchain to record trades
+│   ├── client.rs         # Candlestick data and filters
+│   ├── config.rs         # Loads Settings.toml
+│   ├── credential.rs     # API key and secret management
+│   ├── decide.rs         # Core decision engine
+│   ├── dto.rs            # Data models and enums
+│   ├── leverage.rs       # Adjusts trading leverage
+│   ├── order.rs          # Order execution and closing
+│   ├── schedule.rs       # Periodic candle fetch and decision loop
+│   ├── trade.rs          # Trade generation and moving average logic
+│   └── main.rs           # App bootstrap
+└── config/Settings.toml  # Binance configuration
+```
+
+---
+
+## Strategy
+
+### 1. Moving Averages
+
+* **CMA**: Moving average of the last 200 candles (from a total of 224).
+* **OMA**: Moving average of the first 200 candles.
+
+### 2. Bias
+
+* **Bullish**: CMA > OMA
+* **Bearish**: CMA < OMA
+* **None**: CMA == OMA
+
+### 3. Logarithmic Price Zones
+
+* Zones Z1 through Z7 are computed between `min(low)` and `max(high)`.
+* Logarithmic scaling ensures relative (percentage-based) sensitivity.
+
+### 4. State Machine
+
+* Each `TradeStatus` (e.g., `PrepareZone1`, `InZone3`, `TargetLongZone7`) defines specific transitions.
+* These states dictate whether to:
+
+  * Open a `BUY` or `SELL` order.
+  * Close existing positions.
+  * Adjust leverage (1x or 2x).
+
+### 5. Risk Management
+
+* Orders only placed if notional value ≥ 20 USDT.
+* Leverage adjusted automatically.
+
+---
+
+## Flowchart
 
 ```mermaid
 flowchart TD
     A[Scheduler 50s] --> B[get_candlesticks]
     B --> C[generate_trade]
-    C --> D{Status changed?}
+    C --> D{Trade status changed?}
     D -- No --> A
     D -- Yes --> E[Blockchain.add_block]
     E --> F[decide]
@@ -58,88 +116,40 @@ flowchart TD
 
 ---
 
-## Trading Strategy
-
-* **Moving Averages**
-
-  * `CMA` — moving average of the last **200** candles (excluding the first 24 of the 224 collected).
-  * `OMA` — moving average of the original 200 candles (for comparison).
-* **Bias**
-
-  * `Bullish` if `CMA > OMA`; `Bearish` if `CMA < OMA`; `None` otherwise.
-* **Price Zones (1 – 7)**
-  Logarithmic ranges calculated from `max(high)` and `min(low)` of the 200 analysed candles.
-* **State Machine**
-  Transitions between `TradeStatus` values (e.g., `PrepareZone1`, `InZone3`, `TargetLongZone7`) define **triggers** for market orders or leverage adjustments.
-* **Risk Management**
-
-  * Automatic leverage 1× or 2× according to *(Bias, TradeStatus)* pairs.
-  * Notional check (≥ 20 USDT) before any order.
-
----
-
-## Software Architecture
-
-* **Actix‑Web** as the asynchronous HTTP server.
-* **Tokio** for scheduling and concurrent tasks.
-* **Reqwest** + **HMAC‑SHA256** for authenticated Binance calls.
-* **Once‑Cell** for singletons (settings, credentials, blockchain).
-* **Mutex** around the blockchain to guarantee consistency across threads.
-
-Project layout:
-
-```
-├── src
-│   ├── api.rs            # REST handlers
-│   ├── balance.rs        # Futures balance
-│   ├── blockchain.rs     # Internal blockchain
-│   ├── client.rs         # Generic Binance queries
-│   ├── config.rs         # Settings.toml reader
-│   ├── credential.rs     # Loads API KEY/SECRET
-│   ├── decide.rs         # Decision state machine
-│   ├── dto.rs            # Data types and enums
-│   ├── leverage.rs       # Leverage adjustment
-│   ├── order.rs          # Order execution/closing
-│   ├── schedule.rs       # Asynchronous scheduler
-│   ├── trade.rs          # Technical calculations
-│   └── main.rs           # Actix‑Web bootstrap
-└── config/Settings.toml  # Pair configuration
-```
-
----
-
 ## Tech Stack
 
-| Category          | Technologies        |
-| ----------------- | ------------------- |
-| **Language**      | Rust (stable)       |
-| **Web**           | Actix‑Web, Reqwest  |
-| **Async**         | Tokio               |
-| **Serialization** | Serde / serde\_json |
-| **Cryptography**  | hmac, sha2, hex     |
-| **Configuration** | config crate        |
-| **Testing**       | cargo test (unit)   |
+| Category       | Technology         |
+| -------------- | ------------------ |
+| Language       | Rust 2024 Edition  |
+| Web Framework  | Actix-Web          |
+| Async Runtime  | Tokio              |
+| HTTP Client    | Reqwest            |
+| Serialization  | Serde, serde\_json |
+| Config         | `config` crate     |
+| Cryptography   | hmac, sha2, hex    |
+| Singleton Mgmt | once\_cell         |
+| Testing        | `cargo test`       |
 
 ---
 
 ## Installation
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 $ git clone https://github.com/<user>/rkd-high-frequency-trading.git
 $ cd rkd-high-frequency-trading
 
-# 2. Install the Rust toolchain (if you haven’t)
+# Install Rust (if not already installed)
 $ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 $ rustup default stable
 
-# 3. Build
+# Build the project
 $ cargo build --release
 ```
 
 ### Prerequisites
 
-| Tool    | Minimum version |
+| Tool    | Minimum Version |
 | ------- | --------------- |
 | Rust    | 1.78            |
 | OpenSSL | 1.1             |
@@ -148,36 +158,37 @@ $ cargo build --release
 
 ## Configuration
 
-1. **Environment variables**
+### 1. Environment Variables
 
-   ```bash
-   export BINANCE_API_KEY="<your-api-key>"
-   export BINANCE_API_SECRET="<your-api-secret>"
-   ```
-2. **`config/Settings.toml`** (example)
+```bash
+export BINANCE_API_KEY="<your-api-key>"
+export BINANCE_API_SECRET="<your-api-secret>"
+```
 
-   ```toml
-   [binance]
-   base_url      = "https://api.binance.com/api/v3"
-   future_url    = "https://fapi.binance.com/fapi/v1"
-   future_url_v2 = "https://fapi.binance.com/fapi/v2"
-   symbol        = "BTCUSDT"
-   interval      = "1m"
-   limit         = 224
-   leverage      = 1
-   ```
+### 2. Settings File: `config/Settings.toml`
 
-> **Tip** Keep keys and secrets out of version control (`.gitignore`).
+```toml
+[binance]
+base_url      = "https://api.binance.com/api/v3"
+future_url    = "https://fapi.binance.com/fapi/v1"
+future_url_v2 = "https://fapi.binance.com/fapi/v2"
+symbol        = "ETHUSDT"
+interval      = "1h"
+limit         = 271
+leverage      = 1
+```
+
+> Ensure that your API keys are excluded from version control.
 
 ---
 
 ## Running
 
 ```bash
-# Start the server
+# Launch the trading bot server
 $ cargo run --release
 
-# Expected output
+# Output
 Server running at http://localhost:8080
 ```
 
@@ -185,49 +196,47 @@ Server running at http://localhost:8080
 
 ## HTTP API
 
-| Method   | Route                 | Description                                           |
-| -------- | --------------------- | ----------------------------------------------------- |
-| **GET**  | `/trades/start`       | Start the scheduler (50 s loop).                      |
-| **POST** | `/trades/order`       | Send manual order *(body: {"side":"BUY" \| "SELL"})*. |
-| **GET**  | `/trades/chain`       | Return the full blockchain.                           |
-| **GET**  | `/trades/last`        | Latest trade recorded.                                |
-| **GET**  | `/trades/balance`     | USDT balance in the Futures wallet.                   |
-| **POST** | `/trades/order/close` | Close **all** open positions.                         |
-| **PUT**  | `/leverage`           | Adjust leverage *(body: {"value": 1 \| 2})*.          |
-| **POST** | `/scheduler/stop`     | Stop the scheduler.                                   |
-| **GET**  | `/health`             | Simple health‑check.                                  |
-
-The complete specification (payloads, response samples) will be available soon in [`docs/api_spec.md`](docs/api_spec.md).
+| Method | Endpoint               | Description                                          |
+| ------ | ---------------------- | ---------------------------------------------------- |
+| POST   | `/trades/start`        | Start the scheduler loop.                            |
+| POST   | `/trades/stop`         | Stop the scheduler.                                  |
+| GET    | `/trades/health-check` | Health status of the scheduler.                      |
+| GET    | `/trades/chain`        | Return full blockchain with trades.                  |
+| GET    | `/trades/chain/last`   | Return the most recent trade.                        |
+| GET    | `/trades/balance`      | Return current USDT balance.                         |
+| POST   | `/trades/order/open`   | Open a manual order (`{"side": "BUY"}` or `"SELL"`). |
+| POST   | `/trades/order/close`  | Close all open positions.                            |
+| PUT    | `/trades/leverage`     | Adjust current leverage.                             |
 
 ---
 
 ## Security Best Practices
 
-* Store Binance keys in a **secret manager** or protected environment variables.
-* Use a **firewall**/VPN to restrict request IPs.
-* Test on a **testnet account** before going live.
-* Set leverage/notional limits aligned with your risk profile.
+* Store Binance API credentials securely.
+* Restrict external access to the server using VPN/firewall.
+* Test strategies in a Binance Futures **testnet** environment.
+* Use notional limits to avoid accidental high-volume exposure.
 
 ---
 
 ## Roadmap
 
-* [ ] Persist the blockchain in SQLite/PostgreSQL.
-* [ ] Implement an offline back‑tester.
-* [ ] Add alerts via Telegram/Slack.
-* [ ] Dockerfile + Helm Chart for Kubernetes deployment.
+* [ ] Blockchain persistence (SQLite/PostgreSQL)
+* [ ] Offline backtesting module
+* [ ] Telegram/Slack notifications
+* [ ] Dockerfile and Kubernetes Helm Chart
 
 ---
 
 ## Contributing
 
-1. Fork the project.
-2. Create a branch (`git checkout -b feature/MyFeature`).
-3. Commit your changes (`git commit -m 'feat: My new feature'`).
-4. Push to the branch (`git push origin feature/MyFeature`).
-5. Open a **Pull Request**.
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit your changes: `git commit -m 'feat: add new feature'`
+4. Push to your branch: `git push origin feature/my-feature`
+5. Open a Pull Request.
 
-> Respect `rustfmt` formatting and run `clippy` before opening PRs.
+> Please run `cargo fmt` and `cargo clippy` before submitting PRs.
 
 ---
 
@@ -237,4 +246,4 @@ Distributed under the **MIT License**. See the [`LICENSE`](LICENSE) file for det
 
 ---
 
-> Built with ❤ in Rust — performance, safety and fun.
+> Built with ♥ in Rust — performance, safety, and fun.
