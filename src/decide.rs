@@ -59,12 +59,20 @@ pub fn decide(binance_settings: &BinanceSettings) {
             });
         }
 
+        (Bias::Bullish, Some(TradeStatus::TargetLongZone7))
+        | (Bias::Bearish, Some(TradeStatus::TargetShortZone1)) => {
+            let binance = binance_settings.clone();
+            tokio::spawn(async move {
+                if let Err(e) = set_leverage_with_value(&binance, 1).await {
+                    eprintln!("Error setting leverage to 1 (target zone): {}", e);
+                }
+            });
+        }
+
         (Bias::Bullish, Some(TradeStatus::OutZone5))
         | (Bias::Bullish, Some(TradeStatus::PrepareZone1))
-        | (Bias::Bullish, Some(TradeStatus::TargetLongZone7))
         | (Bias::Bearish, Some(TradeStatus::OutZone3))
-        | (Bias::Bearish, Some(TradeStatus::PrepareZone7))
-        | (Bias::Bearish, Some(TradeStatus::TargetShortZone1)) => {
+        | (Bias::Bearish, Some(TradeStatus::PrepareZone7)) => {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 if let Err(e) = set_leverage_with_value(&binance, 1).await {

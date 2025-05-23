@@ -50,15 +50,15 @@ pub async fn get_futures_balance(
 
         for balance in &balances {
             if balance.asset == "USDT" {
-                println!("Saldo total em USDT: {}", balance.total);
-                println!("Saldo disponivel em USDT: {}", balance.available);
+                println!("Total balance in USDT: {}", balance.total);
+                println!("Available balance in USDT: {}", balance.available);
             }
         }
 
         Ok(balances)
     } else {
         let error_text = res.text().await?;
-        println!("Erro ao consultar saldo: {}", error_text);
-        Err("Erro na resposta da Binance".into())
+        println!("Error checking balance: {}", error_text);
+        Err("Binance response error".into())
     }
 }

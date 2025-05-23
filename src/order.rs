@@ -39,17 +39,17 @@ async fn get_server_time_offset(settings: &BinanceSettings) -> Result<i64, Strin
         .get(&time_url)
         .send()
         .await
-        .map_err(|e| format!("Erro ao consultar /time: {:?}", e))?;
+        .map_err(|e| format!("Error querying /time: {:?}", e))?;
 
     let json: serde_json::Value = res
         .json()
         .await
-        .map_err(|e| format!("Erro ao parsear /time: {:?}", e))?;
+        .map_err(|e| format!("Error parsing /time: {:?}", e))?;
 
-    let server_time = json["serverTime"].as_i64().ok_or("Campo serverTime ausente")?;
+    let server_time = json["serverTime"].as_i64().ok_or("serverTime field missing")?;
     let local_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map_err(|_| "Erro no relógio local")?
+        .map_err(|_| "Local clock error")?
         .as_millis() as i64;
 
     Ok(server_time - local_time)
@@ -74,17 +74,17 @@ pub async fn execute_future_order(
 
     let balances = get_futures_balance(settings)
         .await
-        .map_err(|e| format!("Erro ao consultar saldo: {:?}", e))?;
+        .map_err(|e| format!("Error checking balance: {:?}", e))?;
 
     let usdt_balance: BalanceResponse = balances
         .into_iter()
         .find(|b| b.asset == "USDT")
-        .ok_or("Saldo de USDT não encontrado")?;
+        .ok_or("USDT balance not found")?;
 
     let available_usdt: f64 = usdt_balance
         .available
         .parse()
-        .map_err(|_| "Erro ao converter saldo USDT para f64")?;
+        .map_err(|_| "Error converting USDT balance to f64")?;
 
     let quantity_raw = available_usdt / preco_btc;
     let quantity = round_quantity(quantity_raw, lot_size_info.step_size);
@@ -96,14 +96,14 @@ pub async fn execute_future_order(
         .to_string();
 
     println!(
-        "→ Enviando ordem com side: '{}', quantity: '{}' (USDT: {}, Preço BTC: {}, StepSize: {})",
+        "Sending order with side: '{}', quantity: '{}' (USDT: {}, Cryptocurrency Price: {}, StepSize: {})",
         side, quantity_str, available_usdt, preco_btc, lot_size_info.step_size
     );
 
     let notional = quantity * preco_btc;
     if notional < 20.0 {
         return Err(format!(
-            "Valor total da ordem ({:.2} USDT) é menor que o mínimo exigido (20 USDT).",
+            "Total order value ({:.2} USDT) is less than the minimum required (20 USDT)",
             notional
         ));
     }
@@ -134,15 +134,15 @@ pub async fn execute_future_order(
         .headers(headers)
         .send()
         .await
-        .map_err(|e| format!("Erro de requisição: {:?}", e))?;
+        .map_err(|e| format!("Request error: {:?}", e))?;
 
     if res.status().is_success() {
         res.json::<OrderResponse>()
             .await
-            .map_err(|e| format!("Erro ao interpretar JSON: {:?}", e))
+            .map_err(|e| format!("Error interpreting JSON: {:?}", e))
     } else {
-        let err = res.text().await.unwrap_or_else(|_| "Erro desconhecido".to_string());
-        Err(format!("Erro da Binance: {}", err))
+        let err = res.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+        Err(format!("Binance Error: {}", err))
     }
 }
 
@@ -170,13 +170,13 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
         .headers(headers.clone())
         .send()
         .await
-        .map_err(|e| format!("Erro ao consultar posições: {:?}", e))?;
+        .map_err(|e| format!("Error when querying positions: {:?}", e))?;
 
     let status = res.status();
     if !status.is_success() {
         let err_text = res.text().await.unwrap_or_default();
         return Err(format!(
-            "Erro HTTP {} ao consultar posições: {}",
+            "HTTP error {} when querying positions: {}",
             status,
             err_text
         ));
@@ -185,7 +185,7 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
     let positions: Vec<serde_json::Value> = res
         .json()
         .await
-        .map_err(|e| format!("Erro ao interpretar resposta JSON: {:?}", e))?;
+        .map_err(|e| format!("Error interpreting JSON response: {:?}", e))?;
 
     let mut results = Vec::new();
 
@@ -233,19 +233,18 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
             .headers(headers.clone())
             .send()
             .await
-            .map_err(|e| format!("Erro ao enviar ordem de fechamento: {:?}", e))?;
+            .map_err(|e| format!("Error sending closing order: {:?}", e))?;
 
         if response.status().is_success() {
             let parsed = response
                 .json::<OrderResponse>()
                 .await
-                .map_err(|e| format!("Erro ao interpretar ordem: {:?}", e))?;
+                .map_err(|e| format!("Error interpreting order: {:?}", e))?;
             results.push(parsed);
         } else {
             let err_text = response.text().await.unwrap_or_default();
-            return Err(format!("Erro ao fechar posição de {}: {}", symbol, err_text));
+            return Err(format!("Error closing position {}: {}", symbol, err_text));
         }
     }
-
     Ok(results)
 }

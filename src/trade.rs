@@ -149,35 +149,147 @@ fn handle_bullish_status(
 ) {
     if _last.status.is_none() && current_price >= zone_7 {
         trade.status = Some(TradeStatus::InZone7);
-    } else if current_price > zone_5 && _last.status == Some(TradeStatus::InZone7) {
-        trade.status = Some(TradeStatus::InZone7);
-    } else if _last.status.is_none() && current_price <= zone_1 {
+    } 
+    
+    else 
+    
+    if _last.status.is_none() && current_price <= zone_1 {
         trade.status = Some(TradeStatus::PrepareZone1);
-    } else if current_price < zone_3 && _last.status == Some(TradeStatus::PrepareZone1) {
-        trade.status = Some(TradeStatus::PrepareZone1);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::OutZone5) {
-        trade.status = Some(TradeStatus::InZone7);
-    } else if current_price <= zone_5 && _last.status == Some(TradeStatus::InZone7) {
-        trade.status = Some(TradeStatus::OutZone5);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::OutZone5) {
-        trade.status = Some(TradeStatus::PrepareZone1);
-    } else if current_price >= zone_3 && _last.status == Some(TradeStatus::PrepareZone1) {
-        trade.status = Some(TradeStatus::InZone3);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone3) {
-        trade.status = Some(TradeStatus::PrepareZone1Long);
-    } else if current_price >= zone_3 && _last.status == Some(TradeStatus::PrepareZone1Long) {
-        trade.status = Some(TradeStatus::LongZone3);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::LongZone3) {
-        trade.status = Some(TradeStatus::PrepareZone1);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::LongZone3) {
-        trade.status = Some(TradeStatus::TargetLongZone7);
-    } else if current_price > zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
-        trade.status = Some(TradeStatus::TargetLongZone7);
-    } else if current_price <= zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
-        trade.status = None;
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone3) {
+    }
+
+    // --
+
+    else 
+
+    // --
+    
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::OutZone5) {
         trade.status = Some(TradeStatus::InZone7);
     }
+
+    else
+
+    if current_price > zone_5 && _last.status == Some(TradeStatus::InZone7) {
+        trade.status = Some(TradeStatus::InZone7);
+    } 
+    
+    // --
+
+    else 
+
+    // --
+    
+    if current_price <= zone_5 && _last.status == Some(TradeStatus::InZone7) {
+        trade.status = Some(TradeStatus::OutZone5);
+    }
+
+    else 
+    
+    if current_price < zone_7 && current_price > zone_1 && _last.status == Some(TradeStatus::OutZone5) {
+        trade.status = Some(TradeStatus::OutZone5);
+    }
+
+    // --
+
+    else 
+    
+    // --
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::OutZone5) {
+        trade.status = Some(TradeStatus::PrepareZone1);
+    }
+    
+    else
+    
+    if current_price < zone_3 && _last.status == Some(TradeStatus::PrepareZone1) {
+        trade.status = Some(TradeStatus::PrepareZone1);
+    }
+    
+    // --
+
+    else
+
+    // --
+
+    if current_price >= zone_3 && _last.status == Some(TradeStatus::PrepareZone1) {
+        trade.status = Some(TradeStatus::InZone3);
+    }
+
+    else
+
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone3) {
+        trade.status = Some(TradeStatus::TargetLongZone7);
+    }
+
+    else 
+    
+    if current_price < zone_7 && current_price > zone_1 && _last.status == Some(TradeStatus::InZone3) {
+        trade.status = Some(TradeStatus::InZone3);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone3) {
+        trade.status = Some(TradeStatus::PrepareZone1Long);
+    }
+
+    else
+
+    if current_price < zone_3 && _last.status == Some(TradeStatus::PrepareZone1Long) {
+        trade.status = Some(TradeStatus::PrepareZone1Long);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price >= zone_3 && _last.status == Some(TradeStatus::PrepareZone1Long) {
+        trade.status = Some(TradeStatus::LongZone3);
+    }
+
+    else
+
+    if current_price > zone_1 && current_price < zone_7 && _last.status == Some(TradeStatus::LongZone3) {
+        trade.status = Some(TradeStatus::LongZone3);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::LongZone3) {
+        trade.status = Some(TradeStatus::PrepareZone1);
+    }
+
+    else
+
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::LongZone3) {
+        trade.status = Some(TradeStatus::TargetLongZone7);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price > zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
+        trade.status = Some(TradeStatus::TargetLongZone7);
+    }
+
+    else
+    
+    if current_price <= zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
+        trade.status = None;
+    } 
 }
 
 fn handle_bearish_status(
@@ -192,34 +304,146 @@ fn handle_bearish_status(
 ) {
     if _last.status.is_none() && current_price <= zone_1 {
         trade.status = Some(TradeStatus::InZone1);
-    } else if current_price < zone_3 && _last.status == Some(TradeStatus::InZone1) {
-        trade.status = Some(TradeStatus::InZone1);
-    } else if _last.status.is_none() && current_price >= zone_7 {
+    } 
+    
+    else 
+    
+    if _last.status.is_none() && current_price >= zone_7 {
         trade.status = Some(TradeStatus::PrepareZone7);
-    } else if current_price > zone_5 && _last.status == Some(TradeStatus::PrepareZone7) {
-        trade.status = Some(TradeStatus::PrepareZone7);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::OutZone3) {
+    }
+
+    // --
+
+    else 
+
+    // --
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::OutZone3)  {
         trade.status = Some(TradeStatus::InZone1);
-    } else if current_price >= zone_3 && _last.status == Some(TradeStatus::InZone1) {
+    }
+
+    else
+
+    if current_price < zone_3 && _last.status == Some(TradeStatus::InZone1) {
+        trade.status = Some(TradeStatus::InZone1);
+    } 
+    
+    // --
+
+    else 
+
+    // --
+
+    if current_price >= zone_3 && _last.status == Some(TradeStatus::InZone1) {
         trade.status = Some(TradeStatus::OutZone3);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::OutZone3) {
+    }
+    
+    else 
+    
+    if current_price > zone_1 && current_price < zone_7 && _last.status == Some(TradeStatus::OutZone3) {
+        trade.status = Some(TradeStatus::OutZone3);
+    }
+
+    // --
+
+    else 
+    
+    // --
+
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::OutZone3) {
         trade.status = Some(TradeStatus::PrepareZone7);
-    } else if current_price <= zone_5 && _last.status == Some(TradeStatus::PrepareZone7) {
+    }
+    
+    else
+
+    if current_price > zone_5 && _last.status == Some(TradeStatus::PrepareZone7) {
+        trade.status = Some(TradeStatus::PrepareZone7);
+    }
+    
+    // --
+
+    else
+
+    // --
+
+    if current_price <= zone_5 && _last.status == Some(TradeStatus::PrepareZone7) {
         trade.status = Some(TradeStatus::InZone5);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone5) {
+    }
+
+    else
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone5)  {
+        trade.status = Some(TradeStatus::TargetShortZone1);
+    } 
+
+    else 
+    
+    if current_price > zone_1 && current_price < zone_7 && _last.status == Some(TradeStatus::InZone5) {
+        trade.status = Some(TradeStatus::InZone5);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone5) {
         trade.status = Some(TradeStatus::PrepareZone7Short);
-    } else if current_price <= zone_5 && _last.status == Some(TradeStatus::PrepareZone7Short) {
+    } 
+
+    else 
+    
+    if current_price > zone_5 && _last.status == Some(TradeStatus::PrepareZone7Short) {
+        trade.status = Some(TradeStatus::PrepareZone7Short);
+    } 
+
+    // --
+
+    else
+
+    // --
+
+    if current_price <= zone_5 && _last.status == Some(TradeStatus::PrepareZone7Short) {
         trade.status = Some(TradeStatus::ShortZone5);
-    } else if current_price >= zone_7 && _last.status == Some(TradeStatus::ShortZone5) {
+    } 
+
+    else
+
+    if current_price < zone_7 && current_price > zone_1 && _last.status == Some(TradeStatus::ShortZone5) {
+        trade.status = Some(TradeStatus::ShortZone5);
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price >= zone_7 && _last.status == Some(TradeStatus::ShortZone5) {
         trade.status = Some(TradeStatus::PrepareZone7);
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::ShortZone5) {
+    }
+
+    else
+
+    if current_price <= zone_1 && _last.status == Some(TradeStatus::ShortZone5)  {
         trade.status = Some(TradeStatus::TargetShortZone1);
-    } else if current_price < zone_2 && _last.status == Some(TradeStatus::TargetShortZone1) {
+    }
+
+    // --
+
+    else
+
+    // --
+
+    if current_price < zone_2 && _last.status == Some(TradeStatus::TargetShortZone1)  {
         trade.status = Some(TradeStatus::TargetShortZone1);
-    } else if current_price >= zone_2 && _last.status == Some(TradeStatus::TargetShortZone1) {
+    }
+
+    else
+
+    if current_price >= zone_2 && _last.status == Some(TradeStatus::TargetShortZone1)  {
         trade.status = None;
-    } else if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone5) {
-        trade.status = Some(TradeStatus::InZone1);
     }
 }
 
