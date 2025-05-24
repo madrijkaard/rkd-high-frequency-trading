@@ -120,8 +120,6 @@ flowchart TD
 
 These tables describe how trade states (`TradeStatus`) transition based on the current price position within the logarithmic zones, for both **Bullish** and **Bearish** market biases.
 
----
-
 ### 📈 Bullish Status Transitions
 
 | #  | Previous Status           | `current_price` condition               | New Status                |
@@ -145,8 +143,6 @@ These tables describe how trade states (`TradeStatus`) transition based on the c
 | 17 | `LongZone3`              | `>= zone_7`                              | `TargetLongZone7`        |
 | 18 | `TargetLongZone7`        | `> zone_6`                               | `TargetLongZone7`        |
 | 19 | `TargetLongZone7`        | `<= zone_6`                              | `None`                    |
-
----
 
 ### 📉 Bearish Status Transitions
 
@@ -178,8 +174,6 @@ These tables describe how trade states (`TradeStatus`) transition based on the c
 
 These diagrams represent the internal finite state machines (FSM) that govern transitions of `TradeStatus` based on the `bias` (Bullish or Bearish) and the current price relative to calculated logarithmic zones.
 
----
-
 ### 📈 Bullish Bias
 
 ```mermaid
@@ -197,6 +191,24 @@ stateDiagram-v2
     LongZone3 --> TargetLongZone7: price >= zone_7
     LongZone3 --> PrepareZone1: price <= zone_1
     TargetLongZone7 --> [*]: price <= zone_6
+```
+
+### 📉 Bearish Bias
+
+```mermaid
+stateDiagram-v2
+    [*] --> InZone1: None && price <= zone_1
+    [*] --> PrepareZone7: None && price >= zone_7
+
+    InZone1 --> OutZone3: price >= zone_3
+    OutZone3 --> InZone1: price <= zone_1
+    OutZone3 --> PrepareZone7: price >= zone_7
+    PrepareZone7 --> InZone5: price <= zone_5
+    InZone5 --> TargetShortZone1: price <= zone_1
+    InZone5 --> PrepareZone7Short: price >= zone_7
+    PrepareZone7Short --> ShortZone5: price <= zone_5
+    ShortZone5 --> TargetShortZone1: price <= zone_1
+    TargetShortZone1 --> [*]: price >= zone_2
 ```
 
 ---
