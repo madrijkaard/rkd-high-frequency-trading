@@ -116,6 +116,64 @@ flowchart TD
 
 ---
 
+## Truth Tables
+
+These tables describe how trade states (`TradeStatus`) transition based on the current price position within the logarithmic zones, for both **Bullish** and **Bearish** market biases.
+
+---
+
+### 📈 Bullish Status Transitions
+
+| #  | Previous Status           | `current_price` condition               | New Status                |
+|----|---------------------------|------------------------------------------|---------------------------|
+| 1  | `None`                    | `>= zone_7`                              | `InZone7`                 |
+| 2  | `None`                    | `<= zone_1`                              | `PrepareZone1`           |
+| 3  | `OutZone5`                | `>= zone_7`                              | `InZone7`                 |
+| 4  | `InZone7`                 | `> zone_5`                               | `InZone7`                 |
+| 5  | `InZone7`                 | `<= zone_5`                              | `OutZone5`                |
+| 6  | `OutZone5`                | `< zone_7` and `> zone_1`               | `OutZone5`                |
+| 7  | `OutZone5`                | `<= zone_1`                              | `PrepareZone1`           |
+| 8  | `PrepareZone1`           | `< zone_3`                               | `PrepareZone1`           |
+| 9  | `PrepareZone1`           | `>= zone_3`                              | `InZone3`                 |
+| 10 | `InZone3`                 | `>= zone_7`                              | `TargetLongZone7`        |
+| 11 | `InZone3`                 | `< zone_7` and `> zone_1`               | `InZone3`                 |
+| 12 | `InZone3`                 | `<= zone_1`                              | `PrepareZone1Long`       |
+| 13 | `PrepareZone1Long`       | `< zone_3`                               | `PrepareZone1Long`       |
+| 14 | `PrepareZone1Long`       | `>= zone_3`                              | `LongZone3`               |
+| 15 | `LongZone3`              | `> zone_1` and `< zone_7`              | `LongZone3`               |
+| 16 | `LongZone3`              | `<= zone_1`                              | `PrepareZone1`           |
+| 17 | `LongZone3`              | `>= zone_7`                              | `TargetLongZone7`        |
+| 18 | `TargetLongZone7`        | `> zone_6`                               | `TargetLongZone7`        |
+| 19 | `TargetLongZone7`        | `<= zone_6`                              | `None`                    |
+
+---
+
+### 📉 Bearish Status Transitions
+
+| #  | Previous Status           | `current_price` condition               | New Status                |
+|----|---------------------------|------------------------------------------|---------------------------|
+| 1  | `None`                    | `<= zone_1`                              | `InZone1`                 |
+| 2  | `None`                    | `>= zone_7`                              | `PrepareZone7`           |
+| 3  | `OutZone3`                | `<= zone_1`                              | `InZone1`                 |
+| 4  | `InZone1`                 | `< zone_3`                               | `InZone1`                 |
+| 5  | `InZone1`                 | `>= zone_3`                              | `OutZone3`                |
+| 6  | `OutZone3`                | `> zone_1` and `< zone_7`              | `OutZone3`                |
+| 7  | `OutZone3`                | `>= zone_7`                              | `PrepareZone7`           |
+| 8  | `PrepareZone7`           | `> zone_5`                               | `PrepareZone7`           |
+| 9  | `PrepareZone7`           | `<= zone_5`                              | `InZone5`                 |
+| 10 | `InZone5`                 | `<= zone_1`                              | `TargetShortZone1`       |
+| 11 | `InZone5`                 | `> zone_1` and `< zone_7`              | `InZone5`                 |
+| 12 | `InZone5`                 | `>= zone_7`                              | `PrepareZone7Short`      |
+| 13 | `PrepareZone7Short`      | `> zone_5`                               | `PrepareZone7Short`      |
+| 14 | `PrepareZone7Short`      | `<= zone_5`                              | `ShortZone5`             |
+| 15 | `ShortZone5`             | `< zone_7` and `> zone_1`              | `ShortZone5`             |
+| 16 | `ShortZone5`             | `>= zone_7`                              | `PrepareZone7`           |
+| 17 | `ShortZone5`             | `<= zone_1`                              | `TargetShortZone1`       |
+| 18 | `TargetShortZone1`       | `< zone_2`                               | `TargetShortZone1`       |
+| 19 | `TargetShortZone1`       | `>= zone_2`                              | `None`                    |
+
+---
+
 ## Tech Stack
 
 | Category       | Technology         |
