@@ -208,6 +208,7 @@ stateDiagram-v2
     InZone5 --> PrepareZone7Short: price >= zone_7
     PrepareZone7Short --> ShortZone5: price <= zone_5
     ShortZone5 --> TargetShortZone1: price <= zone_1
+    ShortZone5 --> PrepareZone7: price >= zone_7
     TargetShortZone1 --> [*]: price >= zone_2
 ```
 
