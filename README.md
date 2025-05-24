@@ -174,6 +174,33 @@ These tables describe how trade states (`TradeStatus`) transition based on the c
 
 ---
 
+## Trade State Diagrams
+
+These diagrams represent the internal finite state machines (FSM) that govern transitions of `TradeStatus` based on the `bias` (Bullish or Bearish) and the current price relative to calculated logarithmic zones.
+
+---
+
+### 📈 Bullish Bias
+
+```mermaid
+stateDiagram-v2
+    [*] --> InZone7: None && price >= zone_7
+    [*] --> PrepareZone1: None && price <= zone_1
+
+    InZone7 --> OutZone5: price <= zone_5
+    OutZone5 --> InZone7: price >= zone_7
+    OutZone5 --> PrepareZone1: price <= zone_1
+    PrepareZone1 --> InZone3: price >= zone_3
+    InZone3 --> TargetLongZone7: price >= zone_7
+    InZone3 --> PrepareZone1Long: price <= zone_1
+    PrepareZone1Long --> LongZone3: price >= zone_3
+    LongZone3 --> TargetLongZone7: price >= zone_7
+    LongZone3 --> PrepareZone1: price <= zone_1
+    TargetLongZone7 --> [*]: price <= zone_6
+```
+
+---
+
 ## Tech Stack
 
 | Category       | Technology         |
