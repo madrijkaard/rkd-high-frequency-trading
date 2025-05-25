@@ -1,6 +1,7 @@
 use crate::dto::Trade;
 
 pub fn log_current_zone(trade: &Trade) {
+
     let current_price = parse(&trade.current_price);
     let z7 = parse(&trade.zone_7);
     let z6 = parse(&trade.zone_6);
