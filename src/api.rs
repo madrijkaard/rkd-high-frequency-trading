@@ -1,11 +1,13 @@
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use crate::balance::get_futures_balance;
 use crate::blockchain::BLOCKCHAIN;
+use crate::candlestick::get_candlesticks;
 use crate::config::Settings;
 use crate::dto::OpenOrderRequest;
 use crate::leverage::set_leverage;
-use crate::order::{execute_future_order, close_all_positions};
+use crate::order::{close_all_positions, execute_future_order};
 use crate::schedule::get_scheduler;
+use crate::trade::generate_trade;
 
 #[post("/trades/start")]
 pub async fn post_trades_start() -> impl Responder {
@@ -115,4 +117,51 @@ pub async fn put_leverage() -> impl Responder {
             HttpResponse::InternalServerError().body(format!("Erro: {}", e))
         }
     }
+}
+
+#[get("/trades/spy")]
+pub async fn get_trades_spy() -> impl Responder {
+    
+    let settings = Settings::load();
+
+    if !settings.spy {
+        return HttpResponse::Forbidden().body("Serviço /trades/spy está desativado na configuração");
+    }
+
+    let binance_settings = &settings.binance;
+    let cryptos = settings.cryptos.clone();
+
+    let futures = cryptos.iter().map(|symbol| {
+        let base_url = binance_settings.base_url.clone();
+        let interval = binance_settings.interval.clone();
+        let limit = binance_settings.limit;
+        let symbol_clone = symbol.to_string();
+
+        tokio::spawn(async move {
+            let candles = get_candlesticks(&base_url, &symbol_clone, &interval, limit).await;
+            match candles {
+                Ok(candles_data) => {
+                    let ref_data = get_candlesticks(&base_url, "BTCUSDT", &interval, limit).await;
+                    match ref_data {
+                        Ok(reference_data) => {
+                            let trade = generate_trade(candles_data, reference_data);
+                            let mut map = serde_json::to_value(&trade).unwrap();
+                            if let serde_json::Value::Object(ref mut obj) = map {
+                                obj.insert("crypto".to_string(), serde_json::Value::String(symbol_clone));
+                            }
+                            Ok(map)
+                        }
+                        Err(e) => Err(format!("Erro em BTCUSDT para {}: {}", symbol_clone, e))
+                    }
+                }
+                Err(e) => Err(format!("Erro em {}: {}", symbol_clone, e))
+            }
+        })
+    });
+
+    let results = futures::future::join_all(futures).await;
+
+    let trades: Vec<_> = results.into_iter().filter_map(|r| r.ok()).collect();
+
+    HttpResponse::Ok().json(trades)
 }

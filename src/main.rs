@@ -24,6 +24,7 @@ use api::{
     get_trades_balance,
     post_close_all_positions,
     put_leverage,
+    get_trades_spy,
 };
 
 #[actix_web::main]
@@ -42,6 +43,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_trades_balance)
             .service(post_close_all_positions)
             .service(put_leverage)
+            .service(get_trades_spy)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

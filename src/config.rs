@@ -15,6 +15,8 @@ pub struct BinanceSettings {
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     pub binance: BinanceSettings,
+    pub spy: bool,
+    pub cryptos: Vec<String>,
 }
 
 impl Settings {
