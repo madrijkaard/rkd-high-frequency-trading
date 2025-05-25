@@ -10,6 +10,7 @@ mod credential;
 mod schedule;
 mod leverage;
 mod decide;
+mod log;
 
 use actix_web::{App, HttpServer};
 use api::{

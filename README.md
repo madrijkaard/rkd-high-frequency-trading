@@ -84,7 +84,7 @@ Decisions such as opening or closing positions and adjusting leverage are taken 
 
 ### 4. State Machine
 
-* Each `TradeStatus` (e.g., `PrepareZone1`, `InZone3`, `TargetLongZone7`) defines specific transitions.
+* Each `TradeStatus` (e.g., `PrepareZone1`, `InZone3`, `TargetZone7`) defines specific transitions.
 * These states dictate whether to:
 
   * Open a `BUY` or `SELL` order.
@@ -133,16 +133,16 @@ These tables describe how trade states (`TradeStatus`) transition based on the c
 | 7  | `OutZone5`                | `<= zone_1`                              | `PrepareZone1`           |
 | 8  | `PrepareZone1`           | `< zone_3`                               | `PrepareZone1`           |
 | 9  | `PrepareZone1`           | `>= zone_3`                              | `InZone3`                 |
-| 10 | `InZone3`                 | `>= zone_7`                              | `TargetLongZone7`        |
+| 10 | `InZone3`                 | `>= zone_7`                              | `TargetZone7`        |
 | 11 | `InZone3`                 | `< zone_7` and `> zone_1`               | `InZone3`                 |
 | 12 | `InZone3`                 | `<= zone_1`                              | `PrepareZone1Long`       |
 | 13 | `PrepareZone1Long`       | `< zone_3`                               | `PrepareZone1Long`       |
 | 14 | `PrepareZone1Long`       | `>= zone_3`                              | `LongZone3`               |
 | 15 | `LongZone3`              | `> zone_1` and `< zone_7`              | `LongZone3`               |
 | 16 | `LongZone3`              | `<= zone_1`                              | `PrepareZone1`           |
-| 17 | `LongZone3`              | `>= zone_7`                              | `TargetLongZone7`        |
-| 18 | `TargetLongZone7`        | `> zone_6`                               | `TargetLongZone7`        |
-| 19 | `TargetLongZone7`        | `<= zone_6`                              | `None`                    |
+| 17 | `LongZone3`              | `>= zone_7`                              | `TargetZone7`        |
+| 18 | `TargetZone7`        | `> zone_6`                               | `TargetZone7`        |
+| 19 | `TargetZone7`        | `<= zone_6`                              | `None`                    |
 
 ### 📉 Bearish Status Transitions
 
@@ -157,16 +157,16 @@ These tables describe how trade states (`TradeStatus`) transition based on the c
 | 7  | `OutZone3`                | `>= zone_7`                              | `PrepareZone7`           |
 | 8  | `PrepareZone7`           | `> zone_5`                               | `PrepareZone7`           |
 | 9  | `PrepareZone7`           | `<= zone_5`                              | `InZone5`                 |
-| 10 | `InZone5`                 | `<= zone_1`                              | `TargetShortZone1`       |
+| 10 | `InZone5`                 | `<= zone_1`                              | `TargetZone1`       |
 | 11 | `InZone5`                 | `> zone_1` and `< zone_7`              | `InZone5`                 |
 | 12 | `InZone5`                 | `>= zone_7`                              | `PrepareZone7Short`      |
 | 13 | `PrepareZone7Short`      | `> zone_5`                               | `PrepareZone7Short`      |
 | 14 | `PrepareZone7Short`      | `<= zone_5`                              | `ShortZone5`             |
 | 15 | `ShortZone5`             | `< zone_7` and `> zone_1`              | `ShortZone5`             |
 | 16 | `ShortZone5`             | `>= zone_7`                              | `PrepareZone7`           |
-| 17 | `ShortZone5`             | `<= zone_1`                              | `TargetShortZone1`       |
-| 18 | `TargetShortZone1`       | `< zone_2`                               | `TargetShortZone1`       |
-| 19 | `TargetShortZone1`       | `>= zone_2`                              | `None`                    |
+| 17 | `ShortZone5`             | `<= zone_1`                              | `TargetZone1`       |
+| 18 | `TargetZone1`       | `< zone_2`                               | `TargetZone1`       |
+| 19 | `TargetZone1`       | `>= zone_2`                              | `None`                    |
 
 ---
 
@@ -185,12 +185,12 @@ stateDiagram-v2
     OutZone5 --> InZone7: price >= zone_7
     OutZone5 --> PrepareZone1: price <= zone_1
     PrepareZone1 --> InZone3: price >= zone_3
-    InZone3 --> TargetLongZone7: price >= zone_7
+    InZone3 --> TargetZone7: price >= zone_7
     InZone3 --> PrepareZone1Long: price <= zone_1
     PrepareZone1Long --> LongZone3: price >= zone_3
-    LongZone3 --> TargetLongZone7: price >= zone_7
+    LongZone3 --> TargetZone7: price >= zone_7
     LongZone3 --> PrepareZone1: price <= zone_1
-    TargetLongZone7 --> [*]: price <= zone_6
+    TargetZone7 --> [*]: price <= zone_6
 ```
 
 ### 📉 Bearish Bias
@@ -204,12 +204,12 @@ stateDiagram-v2
     OutZone3 --> InZone1: price <= zone_1
     OutZone3 --> PrepareZone7: price >= zone_7
     PrepareZone7 --> InZone5: price <= zone_5
-    InZone5 --> TargetShortZone1: price <= zone_1
+    InZone5 --> TargetZone1: price <= zone_1
     InZone5 --> PrepareZone7Short: price >= zone_7
     PrepareZone7Short --> ShortZone5: price <= zone_5
-    ShortZone5 --> TargetShortZone1: price <= zone_1
+    ShortZone5 --> TargetZone1: price <= zone_1
     ShortZone5 --> PrepareZone7: price >= zone_7
-    TargetShortZone1 --> [*]: price >= zone_2
+    TargetZone1 --> [*]: price >= zone_2
 ```
 
 ---

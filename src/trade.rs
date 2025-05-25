@@ -218,7 +218,7 @@ fn handle_bullish_status(
     else
 
     if current_price >= zone_7 && _last.status == Some(TradeStatus::InZone3) {
-        trade.status = Some(TradeStatus::TargetLongZone7);
+        trade.status = Some(TradeStatus::TargetZone7);
     }
 
     else 
@@ -272,7 +272,7 @@ fn handle_bullish_status(
     else
 
     if current_price >= zone_7 && _last.status == Some(TradeStatus::LongZone3) {
-        trade.status = Some(TradeStatus::TargetLongZone7);
+        trade.status = Some(TradeStatus::TargetZone7);
     }
 
     // --
@@ -281,13 +281,13 @@ fn handle_bullish_status(
 
     // --
 
-    if current_price > zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
-        trade.status = Some(TradeStatus::TargetLongZone7);
+    if current_price > zone_6 && _last.status == Some(TradeStatus::TargetZone7) {
+        trade.status = Some(TradeStatus::TargetZone7);
     }
 
     else
     
-    if current_price <= zone_6 && _last.status == Some(TradeStatus::TargetLongZone7) {
+    if current_price <= zone_6 && _last.status == Some(TradeStatus::TargetZone7) {
         trade.status = None;
     } 
 }
@@ -373,7 +373,7 @@ fn handle_bearish_status(
     else
 
     if current_price <= zone_1 && _last.status == Some(TradeStatus::InZone5)  {
-        trade.status = Some(TradeStatus::TargetShortZone1);
+        trade.status = Some(TradeStatus::TargetZone1);
     } 
 
     else 
@@ -427,7 +427,7 @@ fn handle_bearish_status(
     else
 
     if current_price <= zone_1 && _last.status == Some(TradeStatus::ShortZone5)  {
-        trade.status = Some(TradeStatus::TargetShortZone1);
+        trade.status = Some(TradeStatus::TargetZone1);
     }
 
     // --
@@ -436,13 +436,13 @@ fn handle_bearish_status(
 
     // --
 
-    if current_price < zone_2 && _last.status == Some(TradeStatus::TargetShortZone1)  {
-        trade.status = Some(TradeStatus::TargetShortZone1);
+    if current_price < zone_2 && _last.status == Some(TradeStatus::TargetZone1)  {
+        trade.status = Some(TradeStatus::TargetZone1);
     }
 
     else
 
-    if current_price >= zone_2 && _last.status == Some(TradeStatus::TargetShortZone1)  {
+    if current_price >= zone_2 && _last.status == Some(TradeStatus::TargetZone1)  {
         trade.status = None;
     }
 }

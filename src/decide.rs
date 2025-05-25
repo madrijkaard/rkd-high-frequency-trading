@@ -59,8 +59,8 @@ pub fn decide(binance_settings: &BinanceSettings) {
             });
         }
 
-        (Bias::Bullish, Some(TradeStatus::TargetLongZone7))
-        | (Bias::Bearish, Some(TradeStatus::TargetShortZone1)) => {
+        (Bias::Bullish, Some(TradeStatus::TargetZone7))
+        | (Bias::Bearish, Some(TradeStatus::TargetZone1)) => {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 if let Err(e) = set_leverage_with_value(&binance, 1).await {

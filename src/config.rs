@@ -9,6 +9,7 @@ pub struct BinanceSettings {
     pub interval: String,
     pub limit: u32,
     pub leverage: u32,
+    pub decide: bool,
 }
 
 #[derive(Debug, Deserialize, Clone)]

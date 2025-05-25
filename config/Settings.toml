@@ -6,3 +6,4 @@ symbol = "ETHUSDT"
 interval = "1h"
 limit = 271
 leverage = 1
+decide = false

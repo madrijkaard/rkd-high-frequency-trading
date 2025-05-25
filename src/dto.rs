@@ -50,14 +50,14 @@ pub enum TradeStatus {
     InZone3,
     PrepareZone1Long,
     LongZone3,
-    TargetLongZone7,
+    TargetZone7,
     InZone1,
     OutZone3,
     PrepareZone7,
     InZone5,
     PrepareZone7Short,
     ShortZone5,
-    TargetShortZone1,
+    TargetZone1,
 }
 
 #[derive(Debug, Deserialize)]
