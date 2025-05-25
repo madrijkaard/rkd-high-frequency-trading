@@ -31,6 +31,7 @@ impl Scheduler {
     }
 
     pub fn start(&mut self) {
+
         if self.active {
             return;
         }
@@ -40,12 +41,18 @@ impl Scheduler {
         let binance_settings = settings.binance.clone();
 
         self.handle = Some(tokio::spawn(async move {
+            
             let mut interval = interval(Duration::from_secs(50));
 
             loop {
                 interval.tick().await;
 
-                let candlesticks = match get_candlesticks(&binance_settings).await {
+                let candlesticks = match get_candlesticks(
+                    &binance_settings.base_url,
+                    &binance_settings.symbol,
+                    &binance_settings.interval,
+                    binance_settings.limit,
+                ).await {
                     Ok(data) => data,
                     Err(e) => {
                         eprintln!("Error getting candles: {}", e);
@@ -53,7 +60,20 @@ impl Scheduler {
                     }
                 };
 
-                let trade = generate_trade(candlesticks);
+                let ref_candlesticks = match get_candlesticks(
+                    &binance_settings.base_url,
+                    "BTCUSDT",
+                    &binance_settings.interval,
+                    binance_settings.limit,
+                ).await {
+                    Ok(data) => data,
+                    Err(e) => {
+                        eprintln!("Error getting BTCUSDT candles: {}", e);
+                        continue;
+                    }
+                };
+
+                let trade = generate_trade(candlesticks, ref_candlesticks);
 
                 log_current_zone(&trade);
 

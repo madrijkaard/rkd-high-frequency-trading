@@ -1,11 +1,12 @@
 use crate::blockchain::BLOCKCHAIN;
 use crate::dto::{Bias, Candlestick, Trade, TradeStatus};
 
-pub fn generate_trade(candlesticks: Vec<Candlestick>) -> Trade {
+pub fn generate_trade(candlesticks: Vec<Candlestick>, reference_candles: Vec<Candlestick>) -> Trade {
     
     let of = candlesticks.len();
+    let reference_of = reference_candles.len();
 
-    if of < 271 {
+    if of < 271 || reference_of < 271 {
         return Trade {
             current_price: "0.0".into(),
             cma: "0.0".into(),
@@ -25,8 +26,8 @@ pub fn generate_trade(candlesticks: Vec<Candlestick>) -> Trade {
         };
     }
 
-    let cma_valor = calculate_moving_average(&candlesticks[71..]);
-    let oma_valor = calculate_moving_average(&candlesticks[..200]);
+    let cma_valor = calculate_moving_average(&reference_candles[71..]);
+    let oma_valor = calculate_moving_average(&reference_candles[..200]);
 
     let bias = if cma_valor > oma_valor {
         Bias::Bullish

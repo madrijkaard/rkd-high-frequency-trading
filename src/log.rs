@@ -1,40 +1,49 @@
 use crate::dto::Trade;
 
 pub fn log_current_zone(trade: &Trade) {
+    
+    print!("\x1B[2J\x1B[1;1H");
 
     let current_price = parse(&trade.current_price);
-    let z7 = parse(&trade.zone_7);
-    let z6 = parse(&trade.zone_6);
-    let z5 = parse(&trade.zone_5);
-    let z4 = parse(&trade.zone_4);
-    let z3 = parse(&trade.zone_3);
-    let z2 = parse(&trade.zone_2);
-    let z1 = parse(&trade.zone_1);
+    let zones = vec![
+        ("Z1", parse(&trade.zone_1)),
+        ("Z2", parse(&trade.zone_2)),
+        ("Z3", parse(&trade.zone_3)),
+        ("Z4", parse(&trade.zone_4)),
+        ("Z5", parse(&trade.zone_5)),
+        ("Z6", parse(&trade.zone_6)),
+        ("Z7", parse(&trade.zone_7)),
+        ("Z8", f64::MAX),
+    ];
 
-    let (zona_a, zona_b) = if current_price > z7 {
-        ("MAX", "Z7")
-    } else if current_price > z6 && current_price <= z7 {
-        ("Z7", "Z6")
-    } else if current_price > z5 && current_price <= z6 {
-        ("Z6", "Z5")
-    } else if current_price > z4 && current_price <= z5 {
-        ("Z5", "Z4")
-    } else if current_price > z3 && current_price <= z4 {
-        ("Z4", "Z3")
-    } else if current_price > z2 && current_price <= z3 {
-        ("Z3", "Z2")
-    } else if current_price > z1 && current_price <= z2 {
-        ("Z2", "Z1")
-    } else {
-        ("Z1", "MIN")
-    };
+    println!("");
 
+    println!("+------------------------+");
+
+    for i in (0..zones.len()).rev() {
+        let label = zones[i].0;
+        let lower = if i == 0 { 0.0 } else { zones[i - 1].1 };
+        let upper = zones[i].1;
+
+        let is_current_zone = current_price > lower && current_price <= upper
+            || (label == "Z1" && current_price <= lower);
+
+        if is_current_zone {
+            println!("\x1b[44;97m| {:^22} |\x1b[0m", format!("{:.2}", current_price));
+        } else {
+            println!("| {:^22} |", label);
+        }
+
+        if i != 0 {
+            println!("|------------------------|");
+        }
+    }
+
+    println!("+------------------------+");
     println!(
-        "[{}] - {} is between {} and {}",
+        "\n[{}] - Preco atual: {}",
         chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-        trade.current_price,
-        zona_a,
-        zona_b
+        trade.current_price
     );
 }
 

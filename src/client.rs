@@ -5,13 +5,18 @@ use crate::dto::{
 use reqwest::Client;
 use serde_json::Value;
 
-pub async fn get_candlesticks(settings: &BinanceSettings) -> Result<Vec<Candlestick>, String> {
-    let url = format!("{}/uiKlines", settings.base_url);
+pub async fn get_candlesticks(
+    base_url: &str,
+    symbol: &str,
+    interval: &str,
+    limit: u32,
+) -> Result<Vec<Candlestick>, String> {
+    let url = format!("{}/uiKlines", base_url);
 
     let params = [
-        ("symbol", settings.symbol.as_str()),
-        ("interval", settings.interval.as_str()),
-        ("limit", &settings.limit.to_string()),
+        ("symbol", symbol),
+        ("interval", interval),
+        ("limit", &limit.to_string()),
     ];
 
     let client = Client::new();
