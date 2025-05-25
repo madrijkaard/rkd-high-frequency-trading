@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 use crate::trade::generate_trade;
 use crate::config::Settings;
-use crate::client::get_candlesticks;
+use crate::candlestick::get_candlesticks;
 use crate::blockchain::BLOCKCHAIN;
 use crate::decide::decide;
 use crate::log::log_current_zone;

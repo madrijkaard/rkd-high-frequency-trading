@@ -1,5 +1,5 @@
 ﻿use crate::balance::get_futures_balance;
-use crate::client::{get_current_btc_price, get_lot_size_info};
+use crate::candlestick::{get_current_btc_price, get_lot_size_info};
 use crate::credential::get_credentials;
 use crate::dto::{BalanceResponse, OrderResponse};
 use crate::config::BinanceSettings;
