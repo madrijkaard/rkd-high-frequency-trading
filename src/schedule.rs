@@ -7,7 +7,7 @@ use once_cell::sync::Lazy;
 use crate::trade::generate_trade;
 use crate::config::Settings;
 use crate::candlestick::get_candlesticks;
-use crate::blockchain::BLOCKCHAIN;
+use crate::blockchain::add_trade_block;
 use crate::decide::decide;
 use crate::log::log_current_zone;
 
@@ -31,7 +31,6 @@ impl Scheduler {
     }
 
     pub fn start(&mut self) {
-
         if self.active {
             return;
         }
@@ -41,7 +40,6 @@ impl Scheduler {
         let binance_settings = settings.binance.clone();
 
         self.handle = Some(tokio::spawn(async move {
-            
             let mut interval = interval(Duration::from_secs(50));
 
             loop {
@@ -72,21 +70,19 @@ impl Scheduler {
                         continue;
                     }
                 };
-                
+
                 let trade = generate_trade(
                     binance_settings.symbol.clone(),
                     candlesticks,
-                    ref_candlesticks,);
+                    ref_candlesticks,
+                );
 
                 log_current_zone(&trade);
 
-                let was_added = {
-                    let mut chain = BLOCKCHAIN.lock().unwrap();
-                    chain.add_block(trade.clone())
-                };
+                let was_added = add_trade_block(trade.clone());
 
                 if was_added && binance_settings.decide {
-                    decide(&binance_settings);
+                    decide(&trade.symbol, &binance_settings);
                 }
             }
         }));
@@ -103,4 +99,3 @@ impl Scheduler {
 pub fn get_scheduler() -> Arc<Mutex<Scheduler>> {
     SCHEDULER.clone()
 }
-

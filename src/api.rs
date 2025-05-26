@@ -1,12 +1,12 @@
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use crate::balance::get_futures_balance;
-use crate::blockchain::BLOCKCHAIN;
 use crate::candlestick::get_candlesticks;
 use crate::config::Settings;
 use crate::dto::OpenOrderRequest;
 use crate::leverage::set_leverage;
 use crate::order::{close_all_positions, execute_future_order};
 use crate::schedule::get_scheduler;
+use crate::blockchain::{get_blockchain_for, get_last_trade_for, get_all_symbols, BLOCKCHAIN};
 
 #[post("/trades/start")]
 pub async fn post_trades_start() -> impl Responder {
@@ -32,24 +32,21 @@ pub async fn get_trades_health_check() -> impl Responder {
     HttpResponse::Ok().body(format!("status: {}", status))
 }
 
-#[get("/trades/chain")]
-pub async fn get_trades_chain() -> impl Responder {
-    let chain = BLOCKCHAIN.lock().unwrap();
-
-    if chain.is_valid() {
-        HttpResponse::Ok().json(chain.all())
-    } else {
-        HttpResponse::InternalServerError().body("Invalid blockchain: integrity compromised")
+#[get("/trades/chains/{symbol}")]
+pub async fn get_trades_chain_by_symbol(path: web::Path<String>) -> impl Responder {
+    let symbol = path.into_inner();
+    match get_blockchain_for(&symbol) {
+        Some(chain) => HttpResponse::Ok().json(chain),
+        None => HttpResponse::NotFound().body(format!("Nenhuma blockchain encontrada para {}", symbol)),
     }
 }
 
-#[get("/trades/chain/last")]
-pub async fn get_last_trade() -> impl Responder {
-    let chain = BLOCKCHAIN.lock().unwrap();
-
-    match chain.get_last_trade() {
+#[get("/trades/chains/{symbol}/last")]
+pub async fn get_last_trade_by_symbol(path: web::Path<String>) -> impl Responder {
+    let symbol = path.into_inner();
+    match get_last_trade_for(&symbol) {
         Some(trade) => HttpResponse::Ok().json(trade),
-        None => HttpResponse::NotFound().body("No trades found on blockchain"),
+        None => HttpResponse::NotFound().body(format!("Nenhum trade encontrado para {}", symbol)),
     }
 }
 
@@ -151,4 +148,27 @@ pub async fn get_trades_spy() -> impl Responder {
         .collect();
 
     HttpResponse::Ok().json(trades)
+}
+
+#[get("/trades/chains")]
+pub async fn get_all_symbols_chains() -> impl Responder {
+    let symbols = get_all_symbols();
+    HttpResponse::Ok().json(symbols)
+}
+
+#[get("/trades/chains/{symbol}/valid")]
+pub async fn get_chain_validity(path: web::Path<String>) -> impl Responder {
+    let symbol = path.into_inner();
+    let map = BLOCKCHAIN.lock().unwrap();
+
+    match map.get(&symbol) {
+        Some(chain) => {
+            if chain.is_valid() {
+                HttpResponse::Ok().body("Blockchain válida")
+            } else {
+                HttpResponse::Conflict().body("Blockchain corrompida")
+            }
+        }
+        None => HttpResponse::NotFound().body("Blockchain não encontrada"),
+    }
 }

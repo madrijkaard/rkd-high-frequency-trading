@@ -1,19 +1,15 @@
-use crate::blockchain::BLOCKCHAIN;
+use crate::blockchain::get_last_trade_for;
 use crate::dto::{Bias, TradeStatus};
 use crate::order::{execute_future_order, close_all_positions};
 use crate::config::BinanceSettings;
 use crate::leverage::set_leverage_with_value;
 
-pub fn decide(binance_settings: &BinanceSettings) {
-    
-    let trade = {
-        let chain = BLOCKCHAIN.lock().unwrap();
-        match chain.get_last_trade() {
-            Some(t) => t,
-            None => {
-                println!("No trades found for decision");
-                return;
-            }
+pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
+    let trade = match get_last_trade_for(symbol) {
+        Some(t) => t,
+        None => {
+            println!("No trades found for decision for symbol: {}", symbol);
+            return;
         }
     };
 
@@ -21,7 +17,6 @@ pub fn decide(binance_settings: &BinanceSettings) {
     let status = trade.status.clone();
 
     match (bias, status) {
-
         (_, None) => {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
@@ -53,8 +48,8 @@ pub fn decide(binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             tokio::spawn(async move {
                 match execute_future_order(&binance, "SELL").await {
-                    Ok(order) => println!("SALE order executed: {:?}", order),
-                    Err(e) => eprintln!("Error executing SALE order: {}", e),
+                    Ok(order) => println!("SELL order executed: {:?}", order),
+                    Err(e) => eprintln!("Error executing SELL order: {}", e),
                 }
             });
         }
@@ -100,7 +95,12 @@ pub fn decide(binance_settings: &BinanceSettings) {
         }
 
         _ => {
-            println!("No action taken for status: {:?} with bias: {:?}", trade.status, trade.bias);
+            println!(
+                "No action taken for status: {:?} with bias: {:?} (symbol: {})",
+                trade.status,
+                trade.bias,
+                trade.symbol
+            );
         }
     }
 }

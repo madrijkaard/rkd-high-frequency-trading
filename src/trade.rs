@@ -1,9 +1,8 @@
-use crate::blockchain::BLOCKCHAIN;
+use crate::blockchain::get_last_trade_for;
 use crate::dto::{Bias, Candlestick, Trade};
 use crate::status_trade::update_status;
 
 pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_candles: Vec<Candlestick>) -> Trade {
-    
     let of = candlesticks.len();
     let reference_of = reference_candles.len();
 
@@ -68,7 +67,7 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
     let log_zone_7 = (log_max + log_zone_6) / 2.0;
 
     let trade = Trade {
-        symbol,
+        symbol: symbol.clone(),
         current_price,
         cma: format!("{:.8}", cma_valor),
         oma: format!("{:.8}", oma_valor),
@@ -86,12 +85,7 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
         of,
     };
 
-    let last_blockchain_trade = {
-        let chain = BLOCKCHAIN.lock().unwrap();
-        chain.get_last_trade()
-    };
-
-    match last_blockchain_trade {
+    match get_last_trade_for(&symbol) {
         Some(ref last) => update_status(trade, last),
         None => trade,
     }

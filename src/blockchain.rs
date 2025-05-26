@@ -1,9 +1,10 @@
-use crate::dto::Trade;
+﻿use crate::dto::Trade;
 use serde::{Serialize, Deserialize};
 use sha2::{Digest, Sha256};
+use std::collections::HashMap;
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use once_cell::sync::Lazy;
-use std::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeBlock {
@@ -45,6 +46,7 @@ fn current_timestamp() -> u64 {
         .as_secs()
 }
 
+#[derive(Debug)]
 pub struct TradeBlockchain {
     chain: Vec<TradeBlock>,
 }
@@ -55,7 +57,6 @@ impl TradeBlockchain {
     }
 
     pub fn add_block(&mut self, trade: Trade) -> bool {
-        
         if let Some(last_trade) = self.get_last_trade() {
             if trade.status == last_trade.status {
                 return false;
@@ -70,20 +71,12 @@ impl TradeBlockchain {
         let new_block = TradeBlock::new(index, trade.clone(), previous_hash);
         self.chain.push(new_block);
 
-        println!();
-        println!();
-        println!();
-        
-        println!(
-            "[{}] - New block added - Status: {:?}, Price: {}",
+        println!("\n\n\n[{}] - New block added - {} - Status: {:?}, Price: {}\n\n\n",
             chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            trade.symbol,
             trade.status,
-            trade.current_price
+            trade.current_price,
         );
-
-        println!();
-        println!();
-        println!();
 
         true
     }
@@ -120,6 +113,27 @@ impl TradeBlockchain {
     }
 }
 
-pub static BLOCKCHAIN: Lazy<Mutex<TradeBlockchain>> = Lazy::new(|| {
-    Mutex::new(TradeBlockchain::new())
+pub static BLOCKCHAIN: Lazy<Mutex<HashMap<String, TradeBlockchain>>> = Lazy::new(|| {
+    Mutex::new(HashMap::new())
 });
+
+pub fn add_trade_block(trade: Trade) -> bool {
+    let mut map = BLOCKCHAIN.lock().unwrap();
+    let chain = map.entry(trade.symbol.clone()).or_insert_with(TradeBlockchain::new);
+    chain.add_block(trade)
+}
+
+pub fn get_blockchain_for(symbol: &str) -> Option<Vec<TradeBlock>> {
+    let map = BLOCKCHAIN.lock().unwrap();
+    map.get(symbol).map(|chain| chain.all().to_vec())
+}
+
+pub fn get_last_trade_for(symbol: &str) -> Option<Trade> {
+    let map = BLOCKCHAIN.lock().unwrap();
+    map.get(symbol).and_then(|chain| chain.get_last_trade())
+}
+
+pub fn get_all_symbols() -> Vec<String> {
+    let map = BLOCKCHAIN.lock().unwrap();
+    map.keys().cloned().collect()
+}

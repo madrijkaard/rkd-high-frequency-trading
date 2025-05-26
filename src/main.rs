@@ -18,8 +18,10 @@ use api::{
     post_trades_start,
     post_trades_stop,
     get_trades_health_check,
-    get_trades_chain,
-    get_last_trade,
+    get_trades_chain_by_symbol,
+    get_last_trade_by_symbol,
+    get_all_symbols_chains,
+    get_chain_validity,
     post_trades_order,
     get_trades_balance,
     post_close_all_positions,
@@ -29,7 +31,6 @@ use api::{
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
     println!("Server running at http://localhost:8080");
 
     HttpServer::new(|| {
@@ -37,8 +38,10 @@ async fn main() -> std::io::Result<()> {
             .service(post_trades_start)
             .service(post_trades_stop)
             .service(get_trades_health_check)
-            .service(get_trades_chain)
-            .service(get_last_trade)
+            .service(get_trades_chain_by_symbol)
+            .service(get_last_trade_by_symbol)
+            .service(get_all_symbols_chains)
+            .service(get_chain_validity)
             .service(post_trades_order)
             .service(get_trades_balance)
             .service(post_close_all_positions)
