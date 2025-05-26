@@ -72,8 +72,11 @@ impl Scheduler {
                         continue;
                     }
                 };
-
-                let trade = generate_trade(candlesticks, ref_candlesticks);
+                
+                let trade = generate_trade(
+                    binance_settings.symbol.clone(),
+                    candlesticks,
+                    ref_candlesticks,);
 
                 log_current_zone(&trade);
 

@@ -25,6 +25,7 @@ pub struct Candlestick {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Trade {
+    pub symbol: String,
     pub current_price: String,
     pub cma: String,
     pub oma: String,

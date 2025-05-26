@@ -2,13 +2,14 @@ use crate::blockchain::BLOCKCHAIN;
 use crate::dto::{Bias, Candlestick, Trade};
 use crate::status_trade::update_status;
 
-pub fn generate_trade(candlesticks: Vec<Candlestick>, reference_candles: Vec<Candlestick>) -> Trade {
+pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_candles: Vec<Candlestick>) -> Trade {
     
     let of = candlesticks.len();
     let reference_of = reference_candles.len();
 
     if of < 271 || reference_of < 271 {
         return Trade {
+            symbol,
             current_price: "0.0".into(),
             cma: "0.0".into(),
             oma: "0.0".into(),
@@ -67,6 +68,7 @@ pub fn generate_trade(candlesticks: Vec<Candlestick>, reference_candles: Vec<Can
     let log_zone_7 = (log_max + log_zone_6) / 2.0;
 
     let trade = Trade {
+        symbol,
         current_price,
         cma: format!("{:.8}", cma_valor),
         oma: format!("{:.8}", oma_valor),
