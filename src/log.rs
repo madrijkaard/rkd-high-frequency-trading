@@ -98,7 +98,7 @@ pub fn log_spied_cryptos(trades: &[Trade]) {
         Cell::new("Symbol"),
         Cell::new("Zone"),
         Cell::new("24h"),
-        Cell::new("BTC 24h"),
+        Cell::new("BTC"),
         Cell::new("MA200"),
     ]));
 

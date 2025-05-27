@@ -1,6 +1,7 @@
 use crate::blockchain::get_last_trade_for;
 use crate::dto::{Bias, Candlestick, Trade};
 use crate::status_trade::update_status;
+use chrono::{Local, Timelike};
 
 pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_candles: Vec<Candlestick>) -> Trade {
     let of = candlesticks.len();
@@ -125,39 +126,65 @@ fn calculate_amplitude_ma_200(candles: &[Candlestick], current_price_str: &str) 
 }
 
 fn calculate_performance_24(candles: &[Candlestick]) -> f64 {
-    let close_now = candles[candles.len() - 1]
+    if candles.len() < 25 {
+        return 0.0;
+    }
+
+    let close_now = candles.last().unwrap()
         .close_price
         .parse::<f64>()
-        .expect("close price invalido");
+        .unwrap_or(0.0);
 
-    let close_24h_ago = candles[candles.len() - 25]
-        .close_price
-        .parse::<f64>()
-        .expect("close price invalido 24h atras");
+    let hora_atual = Local::now().hour();
+    let horas_ate_21h = (hora_atual + 24 - 21) % 24;
+    let horas_ate_21h = horas_ate_21h as usize;
 
-    ((close_now / close_24h_ago) - 1.0) * 100.0
+    let index_21h = candles.len().saturating_sub(horas_ate_21h + 1);
+
+    if index_21h >= candles.len() {
+        return 0.0;
+    }
+
+    let candle_21h = &candles[index_21h];
+
+    if let Ok(open_21h) = candle_21h.open_price.parse::<f64>() {
+        if open_21h != 0.0 {
+            return ((close_now / open_21h) - 1.0) * 100.0;
+        }
+    }
+
+    0.0
 }
 
-fn calculate_performance_btc_24(btc_candles: &[Candlestick], altcoin_perf_24: f64) -> String {
-    if btc_candles.len() < 25 {
+fn calculate_performance_btc_24(candles: &[Candlestick], altcoin_perf_24: f64) -> String {
+    if candles.len() < 25 {
         return "0.0".into();
     }
 
-    let btc_close_atual = btc_candles[btc_candles.len() - 1]
+    let close_now = candles.last().unwrap()
         .close_price
         .parse::<f64>()
         .unwrap_or(0.0);
 
-    let btc_close_24h_ago = btc_candles[btc_candles.len() - 25]
-        .close_price
-        .parse::<f64>()
-        .unwrap_or(0.0);
+    let hora_atual = Local::now().hour();
+    let horas_ate_21h = (hora_atual + 24 - 21) % 24;
+    let horas_ate_21h = horas_ate_21h as usize;
 
-    if btc_close_atual == 0.0 || btc_close_24h_ago == 0.0 {
+    let index_21h = candles.len().saturating_sub(horas_ate_21h + 1);
+
+    if index_21h >= candles.len() {
         return "0.0".into();
     }
 
-    let btc_performance = ((btc_close_atual / btc_close_24h_ago) - 1.0) * 100.0;
-    let diff = altcoin_perf_24 - btc_performance;
-    format!("{:.2}", diff)
+    let candle_21h = &candles[index_21h];
+
+    if let Ok(open_21h) = candle_21h.open_price.parse::<f64>() {
+        if open_21h != 0.0 && close_now != 0.0 {
+            let btc_perf_24 = ((close_now / open_21h) - 1.0) * 100.0;
+            let diff = altcoin_perf_24 - btc_perf_24;
+            return format!("{:.2}", diff);
+        }
+    }
+
+    "0.0".into()
 }
