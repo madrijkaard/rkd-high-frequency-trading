@@ -41,6 +41,9 @@ pub struct Trade {
     pub zone_1: String,
     pub zone_min: String,
     pub of: usize,
+    pub performance_24: String,
+    pub performance_btc_24: String,
+    pub amplitude_ma_200: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

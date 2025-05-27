@@ -24,6 +24,9 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
             zone_1: "0.0".into(),
             zone_min: "0.0".into(),
             of,
+            performance_24: "0.0".into(),
+            amplitude_ma_200: "0.0".into(),
+            performance_btc_24: "0.0".into(),
         };
     }
 
@@ -66,9 +69,14 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
     let log_zone_1 = (log_min + log_zone_2) / 2.0;
     let log_zone_7 = (log_max + log_zone_6) / 2.0;
 
+    let performance_24_val = calculate_performance_24(&candlesticks);
+    let performance_24 = format!("{:.2}", performance_24_val);
+    let performance_btc_24 = calculate_performance_btc_24(&reference_candles, performance_24_val);
+    let amplitude_ma_200 = calculate_amplitude_ma_200(&candlesticks, &current_price);
+
     let trade = Trade {
         symbol: symbol.clone(),
-        current_price,
+        current_price: current_price.clone(),
         cma: format!("{:.8}", cma_valor),
         oma: format!("{:.8}", oma_valor),
         bias,
@@ -83,6 +91,9 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
         zone_1: format!("{:.8}", log_zone_1.exp()),
         zone_min: format!("{:.8}", min_low),
         of,
+        performance_24,
+        performance_btc_24,
+        amplitude_ma_200,
     };
 
     match get_last_trade_for(&symbol) {
@@ -98,4 +109,55 @@ pub fn calculate_moving_average(candles: &[Candlestick]) -> f64 {
         .sum();
 
     soma / candles.len() as f64
+}
+
+fn calculate_amplitude_ma_200(candles: &[Candlestick], current_price_str: &str) -> String {
+    if candles.len() < 200 {
+        return "0.0".into();
+    }
+    let oma = calculate_moving_average(&candles[candles.len() - 200..]);
+    let current_price = current_price_str.parse::<f64>().unwrap_or(0.0);
+    if current_price == 0.0 || oma == 0.0 {
+        return "0.0".into();
+    }
+    let amplitude = (current_price.ln() - oma.ln()) * 100.0;
+    format!("{:.2}", amplitude)
+}
+
+fn calculate_performance_24(candles: &[Candlestick]) -> f64 {
+    let close_now = candles[candles.len() - 1]
+        .close_price
+        .parse::<f64>()
+        .expect("close price invalido");
+
+    let close_24h_ago = candles[candles.len() - 25]
+        .close_price
+        .parse::<f64>()
+        .expect("close price invalido 24h atras");
+
+    ((close_now / close_24h_ago) - 1.0) * 100.0
+}
+
+fn calculate_performance_btc_24(btc_candles: &[Candlestick], altcoin_perf_24: f64) -> String {
+    if btc_candles.len() < 25 {
+        return "0.0".into();
+    }
+
+    let btc_close_atual = btc_candles[btc_candles.len() - 1]
+        .close_price
+        .parse::<f64>()
+        .unwrap_or(0.0);
+
+    let btc_close_24h_ago = btc_candles[btc_candles.len() - 25]
+        .close_price
+        .parse::<f64>()
+        .unwrap_or(0.0);
+
+    if btc_close_atual == 0.0 || btc_close_24h_ago == 0.0 {
+        return "0.0".into();
+    }
+
+    let btc_performance = ((btc_close_atual / btc_close_24h_ago) - 1.0) * 100.0;
+    let diff = altcoin_perf_24 - btc_performance;
+    format!("{:.2}", diff)
 }

@@ -12,6 +12,7 @@ mod leverage;
 mod decide;
 mod log;
 mod status_trade;
+mod spy;
 
 use actix_web::{App, HttpServer};
 use api::{

@@ -9,7 +9,9 @@ use crate::config::Settings;
 use crate::candlestick::get_candlesticks;
 use crate::blockchain::add_trade_block;
 use crate::decide::decide;
-use crate::log::log_current_zone;
+use crate::log::{log_current_zone, log_spied_cryptos};
+use crate::spy::spy_cryptos;
+use crate::dto::Trade;
 
 static SCHEDULER: Lazy<Arc<Mutex<Scheduler>>> = Lazy::new(|| Arc::new(Mutex::new(Scheduler::new())));
 
@@ -38,6 +40,8 @@ impl Scheduler {
         self.active = true;
         let settings = Settings::load();
         let binance_settings = settings.binance.clone();
+        let spy_enabled = settings.spy;
+        let cryptos = settings.cryptos.clone();
 
         self.handle = Some(tokio::spawn(async move {
             let mut interval = interval(Duration::from_secs(50));
@@ -77,7 +81,17 @@ impl Scheduler {
                     ref_candlesticks,
                 );
 
-                log_current_zone(&trade);
+                if spy_enabled {
+                    let trades: Vec<Trade> = spy_cryptos(
+                        &binance_settings.base_url,
+                        &binance_settings.interval,
+                        binance_settings.limit,
+                        cryptos.clone(),
+                    ).await;
+                    log_spied_cryptos(&trades);
+                } else {
+                    log_current_zone(&trade);
+                }
 
                 let was_added = add_trade_block(trade.clone());
 

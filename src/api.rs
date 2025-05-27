@@ -1,12 +1,12 @@
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use crate::balance::get_futures_balance;
-use crate::candlestick::get_candlesticks;
 use crate::config::Settings;
 use crate::dto::OpenOrderRequest;
 use crate::leverage::set_leverage;
 use crate::order::{close_all_positions, execute_future_order};
 use crate::schedule::get_scheduler;
 use crate::blockchain::{get_blockchain_for, get_last_trade_for, get_all_symbols, BLOCKCHAIN};
+use crate::spy::spy_cryptos;
 
 #[post("/trades/start")]
 pub async fn post_trades_start() -> impl Responder {
@@ -126,26 +126,13 @@ pub async fn get_trades_spy() -> impl Responder {
     let binance_settings = settings.binance.clone();
     let cryptos = settings.cryptos.clone();
 
-    let tasks = cryptos.into_iter().map(|symbol| {
-        let base_url = binance_settings.base_url.clone();
-        let interval = binance_settings.interval.clone();
-        let limit = binance_settings.limit;
-        let symbol_clone = symbol.clone();
-
-        tokio::spawn(async move {
-            let candles = get_candlesticks(&base_url, &symbol_clone, &interval, limit).await?;
-            let ref_data = get_candlesticks(&base_url, "BTCUSDT", &interval, limit).await?;
-            let trade = crate::trade::generate_trade(symbol_clone, candles, ref_data);
-            Ok::<_, String>(trade)
-        })
-    });
-
-    let results = futures::future::join_all(tasks).await;
-
-    let trades: Vec<_> = results
-        .into_iter()
-        .filter_map(|r| r.ok().and_then(|res| res.ok()))
-        .collect();
+    let trades = spy_cryptos(
+        &binance_settings.base_url,
+        &binance_settings.interval,
+        binance_settings.limit,
+        cryptos,
+    )
+    .await;
 
     HttpResponse::Ok().json(trades)
 }
