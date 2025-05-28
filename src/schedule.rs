@@ -4,14 +4,20 @@ use tokio::task::JoinHandle;
 use tokio::time::interval;
 use once_cell::sync::Lazy;
 
-use crate::trade::generate_trade;
 use crate::config::Settings;
-use crate::candlestick::get_candlesticks;
-use crate::blockchain::add_trade_block;
-use crate::decide::decide;
-use crate::log::{log_current_zone, log_spied_cryptos};
+use crate::dto::{Bias, Trade, TradeStatus};
 use crate::spy::spy_cryptos;
-use crate::dto::Trade;
+use crate::blockchain::{
+    add_trade_block,
+    is_blockchain_limit_reached,
+    get_current_blockchain_symbols,
+    remove_blockchain,
+};
+use crate::decide::decide;
+use crate::log::log_spied_cryptos;
+
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 static SCHEDULER: Lazy<Arc<Mutex<Scheduler>>> = Lazy::new(|| Arc::new(Mutex::new(Scheduler::new())));
 
@@ -39,65 +45,13 @@ impl Scheduler {
 
         self.active = true;
         let settings = Settings::load();
-        let binance_settings = settings.binance.clone();
-        let spy_enabled = settings.spy;
-        let cryptos = settings.cryptos.clone();
 
         self.handle = Some(tokio::spawn(async move {
             let mut interval = interval(Duration::from_secs(50));
 
             loop {
                 interval.tick().await;
-
-                let candlesticks = match get_candlesticks(
-                    &binance_settings.base_url,
-                    &binance_settings.symbol,
-                    &binance_settings.interval,
-                    binance_settings.limit,
-                ).await {
-                    Ok(data) => data,
-                    Err(e) => {
-                        eprintln!("Error getting candles: {}", e);
-                        continue;
-                    }
-                };
-
-                let ref_candlesticks = match get_candlesticks(
-                    &binance_settings.base_url,
-                    "BTCUSDT",
-                    &binance_settings.interval,
-                    binance_settings.limit,
-                ).await {
-                    Ok(data) => data,
-                    Err(e) => {
-                        eprintln!("Error getting BTCUSDT candles: {}", e);
-                        continue;
-                    }
-                };
-
-                let trade = generate_trade(
-                    binance_settings.symbol.clone(),
-                    candlesticks,
-                    ref_candlesticks,
-                );
-
-                if spy_enabled {
-                    let trades: Vec<Trade> = spy_cryptos(
-                        &binance_settings.base_url,
-                        &binance_settings.interval,
-                        binance_settings.limit,
-                        cryptos.clone(),
-                    ).await;
-                    log_spied_cryptos(&trades);
-                } else {
-                    log_current_zone(&trade);
-                }
-
-                let was_added = add_trade_block(trade.clone());
-
-                if was_added && binance_settings.decide {
-                    decide(&trade.symbol, &binance_settings);
-                }
+                choose_crypto(&settings).await;
             }
         }));
     }
@@ -112,4 +66,81 @@ impl Scheduler {
 
 pub fn get_scheduler() -> Arc<Mutex<Scheduler>> {
     SCHEDULER.clone()
+}
+
+async fn choose_crypto(settings: &Settings) {
+    let current_symbols = get_current_blockchain_symbols();
+
+    let trades = spy_cryptos(
+        &settings.binance.base_url,
+        &settings.binance.interval,
+        settings.binance.limit,
+        settings.cryptos.clone(),
+    )
+    .await;
+
+    log_spied_cryptos(&trades);
+
+    let existing_trades: Vec<Trade> = trades
+        .iter()
+        .filter(|t| current_symbols.contains(&t.symbol))
+        .cloned()
+        .collect();
+
+    for trade in &existing_trades {
+        let was_added = add_trade_block(trade.clone());
+        if was_added && settings.binance.decide {
+            decide(&trade.symbol, &settings.binance);
+
+            if matches!(trade.bias, Bias::Bullish) && matches!(trade.status, Some(TradeStatus::OutZone5))
+                || matches!(trade.bias, Bias::Bearish) && matches!(trade.status, Some(TradeStatus::OutZone3))
+            {
+                remove_blockchain(&trade.symbol);
+            }
+        }
+    }
+
+    let mut rng = thread_rng();
+
+    let mut candidates: Vec<Trade> = trades
+        .into_iter()
+        .filter(|t| !current_symbols.contains(&t.symbol))
+        .filter(|t| match t.bias {
+            Bias::Bullish => {
+                let p = parse(&t.current_price);
+                let z1 = parse(&t.zone_1);
+                let z7 = parse(&t.zone_7);
+                p <= z1 || (p > parse(&t.zone_6) && p <= z7)
+            }
+            Bias::Bearish => {
+                let p = parse(&t.current_price);
+                let z2 = parse(&t.zone_2);
+                let z7 = parse(&t.zone_7);
+                p <= z2 || (p > parse(&t.zone_6) && p <= z7)
+            }
+            _ => false,
+        })
+        .collect();
+
+    candidates.shuffle(&mut rng);
+
+    for trade in candidates {
+        if is_blockchain_limit_reached() {
+            break;
+        }
+        let was_added = add_trade_block(trade.clone());
+        if was_added && settings.binance.decide {
+            decide(&trade.symbol, &settings.binance);
+
+            if matches!(trade.bias, Bias::Bullish) && matches!(trade.status, Some(TradeStatus::OutZone5))
+                || matches!(trade.bias, Bias::Bearish) && matches!(trade.status, Some(TradeStatus::OutZone3))
+            {
+                remove_blockchain(&trade.symbol);
+            }
+        }
+    }
+}
+
+fn parse(value: &str) -> f64 {
+    value.parse::<f64>().unwrap_or(0.0)
 }

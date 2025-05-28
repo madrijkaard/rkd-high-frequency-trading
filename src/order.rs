@@ -1,8 +1,7 @@
-﻿use crate::balance::get_futures_balance;
-use crate::candlestick::{get_current_btc_price, get_lot_size_info};
+﻿use crate::candlestick::{get_current_btc_price, get_lot_size_info};
 use crate::credential::get_credentials;
-use crate::dto::{BalanceResponse, OrderResponse};
-use crate::config::BinanceSettings;
+use crate::dto::OrderResponse;
+use crate::config::{BinanceSettings, Settings};
 use hmac::{Hmac, Mac};
 use reqwest::{
     header::{HeaderMap, HeaderValue, CONTENT_TYPE},
@@ -58,6 +57,7 @@ async fn get_server_time_offset(settings: &BinanceSettings) -> Result<i64, Strin
 pub async fn execute_future_order(
     settings: &BinanceSettings,
     side: &str,
+    symbol: &str,
 ) -> Result<OrderResponse, String> {
     let credentials = get_credentials();
     let api_key = &credentials.key;
@@ -69,24 +69,13 @@ pub async fn execute_future_order(
     let timestamp = (get_timestamp() as i64 + offset) as u64;
     let timestamp_str = timestamp.to_string();
 
-    let preco_btc = get_current_btc_price(settings).await?;
-    let lot_size_info = get_lot_size_info(settings).await?;
+    let preco_btc = get_current_btc_price(settings, symbol).await?;
+    let lot_size_info = get_lot_size_info(settings, symbol).await?;
 
-    let balances = get_futures_balance(settings)
-        .await
-        .map_err(|e| format!("Error checking balance: {:?}", e))?;
+    let config = Settings::load();
+    let money = config.money;
 
-    let usdt_balance: BalanceResponse = balances
-        .into_iter()
-        .find(|b| b.asset == "USDT")
-        .ok_or("USDT balance not found")?;
-
-    let available_usdt: f64 = usdt_balance
-        .available
-        .parse()
-        .map_err(|_| "Error converting USDT balance to f64")?;
-
-    let quantity_raw = available_usdt / preco_btc;
+    let quantity_raw = money / preco_btc;
     let quantity = round_quantity(quantity_raw, lot_size_info.step_size);
 
     let precision = (1.0 / lot_size_info.step_size).log10().round() as usize;
@@ -97,7 +86,7 @@ pub async fn execute_future_order(
 
     println!(
         "Sending order with side: '{}', quantity: '{}' (USDT: {}, Cryptocurrency Price: {}, StepSize: {})",
-        side, quantity_str, available_usdt, preco_btc, lot_size_info.step_size
+        side, quantity_str, money, preco_btc, lot_size_info.step_size
     );
 
     let notional = quantity * preco_btc;
@@ -109,7 +98,7 @@ pub async fn execute_future_order(
     }
 
     let mut params = HashMap::new();
-    params.insert("symbol", settings.symbol.as_str());
+    params.insert("symbol", symbol);
     params.insert("side", side);
     params.insert("type", "MARKET");
     params.insert("quantity", &quantity_str);
@@ -146,7 +135,10 @@ pub async fn execute_future_order(
     }
 }
 
-pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<OrderResponse>, String> {
+pub async fn close_all_positions(
+    settings: &BinanceSettings,
+    symbol: &str,
+) -> Result<Vec<OrderResponse>, String> {
     let credentials = get_credentials();
     let api_key = &credentials.key;
     let secret_key = &credentials.secret;
@@ -189,7 +181,7 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
 
     let mut results = Vec::new();
 
-    for position in positions {
+    for position in positions.into_iter().filter(|p| p["symbol"] == symbol) {
         let amt = position["positionAmt"].as_str().unwrap_or("0").parse::<f64>().unwrap_or(0.0);
         let symbol = position["symbol"].as_str().unwrap_or("");
 
@@ -200,7 +192,7 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
         let side = if amt > 0.0 { "SELL" } else { "BUY" };
         let quantity = amt.abs();
 
-        let lot_size_info = get_lot_size_info(settings).await?;
+        let lot_size_info = get_lot_size_info(settings, symbol).await?;
         let quantity_rounded = round_quantity(quantity, lot_size_info.step_size);
         let precision = (1.0 / lot_size_info.step_size).log10().round() as usize;
         let quantity_str = format!("{:.*}", precision, quantity_rounded)
@@ -246,5 +238,6 @@ pub async fn close_all_positions(settings: &BinanceSettings) -> Result<Vec<Order
             return Err(format!("Error closing position {}: {}", symbol, err_text));
         }
     }
+
     Ok(results)
 }

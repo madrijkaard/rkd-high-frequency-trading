@@ -1,7 +1,5 @@
 use crate::config::BinanceSettings;
-use crate::dto::{
-    Candlestick, ExchangeInfoResponse, LotSizeFilter, LotSizeInfo,
-};
+use crate::dto::{Candlestick, ExchangeInfoResponse, LotSizeFilter, LotSizeInfo};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -60,11 +58,11 @@ pub async fn get_candlesticks(
     Ok(candlesticks)
 }
 
-pub async fn get_current_btc_price(settings: &BinanceSettings) -> Result<f64, String> {
-    let url = format!(
-        "{}/ticker/price?symbol={}",
-        settings.future_url, settings.symbol
-    );
+pub async fn get_current_btc_price(
+    settings: &BinanceSettings,
+    symbol: &str,
+) -> Result<f64, String> {
+    let url = format!("{}/ticker/price?symbol={}", settings.future_url, symbol);
 
     let client = Client::new();
 
@@ -94,8 +92,11 @@ pub async fn get_current_btc_price(settings: &BinanceSettings) -> Result<f64, St
     }
 }
 
-pub async fn get_lot_size_info(settings: &BinanceSettings) -> Result<LotSizeInfo, String> {
-    let url = format!("{}/exchangeInfo?symbol={}", settings.future_url, settings.symbol);
+pub async fn get_lot_size_info(
+    settings: &BinanceSettings,
+    symbol: &str,
+) -> Result<LotSizeInfo, String> {
+    let url = format!("{}/exchangeInfo?symbol={}", settings.future_url, symbol);
     let client = Client::new();
 
     let res = client

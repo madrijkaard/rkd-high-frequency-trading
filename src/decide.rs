@@ -15,15 +15,17 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
 
     let bias = trade.bias.clone();
     let status = trade.status.clone();
+    let symbol = &trade.symbol;
 
     match (bias, status) {
         (_, None) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, 1).await {
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
                     eprintln!("Error setting leverage to 1 (status None): {}", e);
                 }
-                match close_all_positions(&binance).await {
+                match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("All positions closed (status None): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions (status None): {}", e),
                 }
@@ -34,8 +36,9 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
         | (Bias::Bullish, Some(TradeStatus::InZone3))
         | (Bias::Bullish, Some(TradeStatus::LongZone3)) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                match execute_future_order(&binance, "BUY").await {
+                match execute_future_order(&binance, "BUY", &symbol).await {
                     Ok(order) => println!("BUY order executed: {:?}", order),
                     Err(e) => eprintln!("Error executing BUY order: {}", e),
                 }
@@ -46,8 +49,9 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
         | (Bias::Bearish, Some(TradeStatus::InZone5))
         | (Bias::Bearish, Some(TradeStatus::ShortZone5)) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                match execute_future_order(&binance, "SELL").await {
+                match execute_future_order(&binance, "SELL", &symbol).await {
                     Ok(order) => println!("SELL order executed: {:?}", order),
                     Err(e) => eprintln!("Error executing SELL order: {}", e),
                 }
@@ -57,8 +61,9 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
         (Bias::Bullish, Some(TradeStatus::TargetZone7))
         | (Bias::Bearish, Some(TradeStatus::TargetZone1)) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, 1).await {
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
                     eprintln!("Error setting leverage to 1 (target zone): {}", e);
                 }
             });
@@ -69,11 +74,12 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
         | (Bias::Bearish, Some(TradeStatus::OutZone3))
         | (Bias::Bearish, Some(TradeStatus::PrepareZone7)) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, 1).await {
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
                     eprintln!("Error setting leverage to 1: {}", e);
                 }
-                match close_all_positions(&binance).await {
+                match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("Closed positions (lev 1): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions: {}", e),
                 }
@@ -83,11 +89,12 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
         (Bias::Bullish, Some(TradeStatus::PrepareZone1Long))
         | (Bias::Bearish, Some(TradeStatus::PrepareZone7Short)) => {
             let binance = binance_settings.clone();
+            let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, 2).await {
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 2).await {
                     eprintln!("Error setting leverage to 2: {}", e);
                 }
-                match close_all_positions(&binance).await {
+                match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("Closed positions (lev 2): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions: {}", e),
                 }

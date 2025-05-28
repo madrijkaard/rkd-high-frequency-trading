@@ -134,4 +134,10 @@ pub struct OrderResponse {
 #[derive(Debug, Deserialize)]
 pub struct OpenOrderRequest {
     pub side: String,
+    pub symbol: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SymbolRequest {
+    pub symbol: String,
 }

@@ -1,50 +1,6 @@
 use crate::dto::Trade;
+use crate::blockchain::get_current_blockchain_symbols; // <-- Importa os symbols ativos
 use prettytable::{Table, Row, Cell, Attr, color};
-
-pub fn log_current_zone(trade: &Trade) {
-    print!("\x1B[2J\x1B[1;1H");
-
-    let current_price = parse(&trade.current_price);
-    let zones = vec![
-        ("Z1", parse(&trade.zone_1)),
-        ("Z2", parse(&trade.zone_2)),
-        ("Z3", parse(&trade.zone_3)),
-        ("Z4", parse(&trade.zone_4)),
-        ("Z5", parse(&trade.zone_5)),
-        ("Z6", parse(&trade.zone_6)),
-        ("Z7", parse(&trade.zone_7)),
-        ("Z8", f64::MAX),
-    ];
-
-    println!();
-    println!("+------------------------+");
-
-    for i in (0..zones.len()).rev() {
-        let label = zones[i].0;
-        let lower = if i == 0 { 0.0 } else { zones[i - 1].1 };
-        let upper = zones[i].1;
-
-        let is_current_zone = current_price > lower && current_price <= upper
-            || (label == "Z1" && current_price <= lower);
-
-        if is_current_zone {
-            println!("\x1b[44;97m| {:^22} |\x1b[0m", format!("{:.2}", current_price));
-        } else {
-            println!("| {:^22} |", label);
-        }
-
-        if i != 0 {
-            println!("|------------------------|");
-        }
-    }
-
-    println!("+------------------------+");
-    println!(
-        "\n[{}] - Preco atual: {}",
-        chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
-        trade.current_price
-    );
-}
 
 pub fn log_spied_cryptos(trades: &[Trade]) {
     fn find_zone_label(trade: &Trade) -> Cell {
@@ -66,7 +22,7 @@ pub fn log_spied_cryptos(trades: &[Trade]) {
             if price > lower && price <= upper || (i == 0 && price <= lower) {
                 let zone = zones[i].0;
                 let mut cell = Cell::new(zone);
-                if zone == "Z1" || zone == "Z8" {
+                if zone == "Z1" || zone == "Z7" {
                     cell = cell.with_style(Attr::ForegroundColor(color::BLUE));
                 }
                 return cell;
@@ -116,9 +72,16 @@ pub fn log_spied_cryptos(trades: &[Trade]) {
     let (max_btc_perf, min_btc_perf) = max_min(&btc_vals);
     let (max_amplitude, min_amplitude) = max_min(&amp_vals);
 
+    let active_symbols = get_current_blockchain_symbols(); // <-- Pega symbols ativos
+
     for trade in trades {
+        let mut symbol_cell = Cell::new(&trade.symbol);
+        if active_symbols.contains(&trade.symbol) {
+            symbol_cell = symbol_cell.with_style(Attr::ForegroundColor(color::YELLOW));
+        }
+
         table.add_row(Row::new(vec![
-            Cell::new(&trade.symbol),
+            symbol_cell,
             find_zone_label(trade),
             highlight_cell(&trade.performance_24, max_perf, min_perf),
             highlight_cell(&trade.performance_btc_24, max_btc_perf, min_btc_perf),

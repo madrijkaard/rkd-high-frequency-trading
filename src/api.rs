@@ -1,7 +1,7 @@
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use crate::balance::get_futures_balance;
 use crate::config::Settings;
-use crate::dto::OpenOrderRequest;
+use crate::dto::{OpenOrderRequest, SymbolRequest};
 use crate::leverage::set_leverage;
 use crate::order::{close_all_positions, execute_future_order};
 use crate::schedule::get_scheduler;
@@ -75,11 +75,13 @@ pub async fn post_trades_order(req: web::Json<OpenOrderRequest>) -> impl Respond
     let binance_settings = &settings.binance;
 
     let side = req.side.to_uppercase();
+    let symbol = req.symbol.to_uppercase();
+
     if side != "BUY" && side != "SELL" {
         return HttpResponse::BadRequest().body("O parâmetro 'side' deve ser 'BUY' ou 'SELL'");
     }
 
-    match execute_future_order(binance_settings, &side).await {
+    match execute_future_order(binance_settings, &side, &symbol).await {
         Ok(order) => HttpResponse::Ok().json(order),
         Err(e) => {
             eprintln!("Erro ao enviar ordem para Binance: {}", e);
@@ -89,11 +91,11 @@ pub async fn post_trades_order(req: web::Json<OpenOrderRequest>) -> impl Respond
 }
 
 #[post("/trades/order/close")]
-pub async fn post_close_all_positions() -> impl Responder {
+pub async fn post_close_all_positions(req: web::Json<SymbolRequest>) -> impl Responder {
     let settings = Settings::load();
     let binance_settings = &settings.binance;
 
-    match close_all_positions(binance_settings).await {
+    match close_all_positions(binance_settings, &req.symbol).await {
         Ok(orders) => HttpResponse::Ok().json(orders),
         Err(e) => {
             eprintln!("Erro ao fechar posições: {}", e);
@@ -103,10 +105,11 @@ pub async fn post_close_all_positions() -> impl Responder {
 }
 
 #[put("/trades/leverage")]
-pub async fn put_leverage() -> impl Responder {
+pub async fn put_leverage(req: web::Json<SymbolRequest>) -> impl Responder {
     let settings = Settings::load();
+    let symbol = &req.symbol;
 
-    match set_leverage(&settings.binance).await {
+    match set_leverage(&settings.binance, symbol).await {
         Ok(response) => HttpResponse::Ok().json(response),
         Err(e) => {
             eprintln!("Erro ao aplicar alavancagem: {}", e);

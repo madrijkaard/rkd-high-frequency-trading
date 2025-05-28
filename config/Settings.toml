@@ -1,15 +1,16 @@
 ﻿spy = true
+limit_operations = 2
+money = 40.0
 cryptos = [
   "ETHUSDT", "AVAXUSDT", "ADAUSDT", "LINKUSDT", "DOTUSDT",
   "ATOMUSDT", "GRTUSDT", "SANDUSDT", "MANAUSDT", "ALGOUSDT",
-  "INJUSDT", "NEARUSDT", "SUIUSDT"
+  "INJUSDT", "NEARUSDT", "SUIUSDT", "UNIUSDT", "ENAUSDT", "SOLUSDT"
 ]
 
 [binance]
 base_url = "https://api.binance.com/api/v3"
 future_url = "https://fapi.binance.com/fapi/v1"
 future_url_v2 = "https://fapi.binance.com/fapi/v2"
-symbol = "ETHUSDT"
 interval = "1h"
 limit = 271
 leverage = 1

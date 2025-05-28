@@ -27,12 +27,16 @@ fn sign_query(query: &str, secret: &str) -> String {
     hex::encode(mac.finalize().into_bytes())
 }
 
-pub async fn set_leverage(settings: &BinanceSettings) -> Result<LeverageResponse, Box<dyn std::error::Error>> {
-    set_leverage_with_value(settings, settings.leverage).await
+pub async fn set_leverage(
+    settings: &BinanceSettings,
+    symbol: &str,
+) -> Result<LeverageResponse, Box<dyn std::error::Error>> {
+    set_leverage_with_value(settings, symbol, settings.leverage).await
 }
 
 pub async fn set_leverage_with_value(
     settings: &BinanceSettings,
+    symbol: &str,
     leverage: u32,
 ) -> Result<LeverageResponse, Box<dyn std::error::Error>> {
     let credentials = get_credentials();
@@ -40,7 +44,7 @@ pub async fn set_leverage_with_value(
 
     let query = format!(
         "symbol={}&leverage={}&recvWindow=10000&timestamp={}",
-        settings.symbol, leverage, timestamp
+        symbol, leverage, timestamp
     );
     let signature = sign_query(&query, &credentials.secret);
     let full_url = format!("{}/leverage?{}&signature={}", settings.future_url, query, signature);

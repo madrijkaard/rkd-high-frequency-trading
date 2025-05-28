@@ -1,4 +1,5 @@
 ﻿use crate::dto::Trade;
+use crate::config::Settings;
 use serde::{Serialize, Deserialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -117,10 +118,42 @@ pub static BLOCKCHAIN: Lazy<Mutex<HashMap<String, TradeBlockchain>>> = Lazy::new
     Mutex::new(HashMap::new())
 });
 
+pub fn is_blockchain_limit_reached() -> bool {
+    let settings = Settings::load();
+    let map = BLOCKCHAIN.lock().unwrap();
+    map.len() >= settings.limit_operations
+}
+
+pub fn remove_blockchain(symbol: &str) {
+    let mut map = BLOCKCHAIN.lock().unwrap();
+    map.remove(symbol);
+}
+
+pub fn get_current_blockchain_symbols() -> Vec<String> {
+    let map = BLOCKCHAIN.lock().unwrap();
+    map.keys().cloned().collect()
+}
+
 pub fn add_trade_block(trade: Trade) -> bool {
     let mut map = BLOCKCHAIN.lock().unwrap();
-    let chain = map.entry(trade.symbol.clone()).or_insert_with(TradeBlockchain::new);
-    chain.add_block(trade)
+
+    if let Some(chain) = map.get_mut(&trade.symbol) {
+        return chain.add_block(trade);
+    }
+
+    let settings = Settings::load();
+    if map.len() >= settings.limit_operations {
+        return false;
+    }
+
+    let mut new_chain = TradeBlockchain::new();
+    let added = new_chain.add_block(trade.clone());
+
+    if added {
+        map.insert(trade.symbol.clone(), new_chain);
+    }
+
+    added
 }
 
 pub fn get_blockchain_for(symbol: &str) -> Option<Vec<TradeBlock>> {

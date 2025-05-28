@@ -5,7 +5,6 @@ pub struct BinanceSettings {
     pub base_url: String,
     pub future_url: String,
     pub future_url_v2: String,
-    pub symbol: String,
     pub interval: String,
     pub limit: u32,
     pub leverage: u32,
@@ -16,7 +15,9 @@ pub struct BinanceSettings {
 pub struct Settings {
     pub binance: BinanceSettings,
     pub spy: bool,
+    pub limit_operations: usize,
     pub cryptos: Vec<String>,
+    pub money: f64,
 }
 
 impl Settings {
