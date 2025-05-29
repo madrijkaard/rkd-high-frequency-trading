@@ -22,12 +22,12 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
-                    eprintln!("Error setting leverage to 1 (status None): {}", e);
-                }
                 match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("All positions closed (status None): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions (status None): {}", e),
+                }
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
+                    eprintln!("Error setting leverage to 1 (status None): {}", e);
                 }
             });
         }
@@ -76,12 +76,12 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
-                    eprintln!("Error setting leverage to 1: {}", e);
-                }
                 match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("Closed positions (lev 1): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions: {}", e),
+                }
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 1).await {
+                    eprintln!("Error setting leverage to 1: {}", e);
                 }
             });
         }
@@ -91,12 +91,12 @@ pub fn decide(symbol: &str, binance_settings: &BinanceSettings) {
             let binance = binance_settings.clone();
             let symbol = symbol.clone();
             tokio::spawn(async move {
-                if let Err(e) = set_leverage_with_value(&binance, &symbol, 2).await {
-                    eprintln!("Error setting leverage to 2: {}", e);
-                }
                 match close_all_positions(&binance, &symbol).await {
                     Ok(closed) => println!("Closed positions (lev 2): {:?}", closed),
                     Err(e) => eprintln!("Error closing positions: {}", e),
+                }
+                if let Err(e) = set_leverage_with_value(&binance, &symbol, 2).await {
+                    eprintln!("Error setting leverage to 2: {}", e);
                 }
             });
         }

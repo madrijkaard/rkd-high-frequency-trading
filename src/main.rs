@@ -13,6 +13,7 @@ mod decide;
 mod log;
 mod status_trade;
 mod spy;
+mod swap;
 
 use actix_web::{App, HttpServer};
 use api::{

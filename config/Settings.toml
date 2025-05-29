@@ -1,5 +1,5 @@
 ﻿spy = true
-limit_operations = 2
+limit_operations = 3
 money = 40.0
 cryptos = [
   "ETHUSDT", "AVAXUSDT", "ADAUSDT", "LINKUSDT", "DOTUSDT",

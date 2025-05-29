@@ -1,5 +1,5 @@
 use crate::dto::Trade;
-use crate::blockchain::get_current_blockchain_symbols; // <-- Importa os symbols ativos
+use crate::blockchain::get_current_blockchain_symbols;
 use prettytable::{Table, Row, Cell, Attr, color};
 
 pub fn log_spied_cryptos(trades: &[Trade]) {
@@ -72,7 +72,7 @@ pub fn log_spied_cryptos(trades: &[Trade]) {
     let (max_btc_perf, min_btc_perf) = max_min(&btc_vals);
     let (max_amplitude, min_amplitude) = max_min(&amp_vals);
 
-    let active_symbols = get_current_blockchain_symbols(); // <-- Pega symbols ativos
+    let active_symbols = get_current_blockchain_symbols();
 
     for trade in trades {
         let mut symbol_cell = Cell::new(&trade.symbol);
