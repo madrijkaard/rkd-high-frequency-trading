@@ -37,4 +37,18 @@ pub fn remove_if_out_of_zone(trade: &Trade) {
             }
         }
     }
+
+    if trade.status.is_none() {
+        let price = parse(&trade.current_price);
+        let z4 = parse(&trade.zone_4);
+        let z5 = parse(&trade.zone_5);
+
+        if price > z4 && price <= z5 {
+            remove_blockchain(&trade.symbol);
+        }
+    }
+}
+
+fn parse(value: &str) -> f64 {
+    value.parse::<f64>().unwrap_or(0.0)
 }
