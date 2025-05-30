@@ -103,15 +103,6 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
     }
 }
 
-pub fn calculate_moving_average(candles: &[Candlestick]) -> f64 {
-    let soma: f64 = candles
-        .iter()
-        .filter_map(|c| c.close_price.parse::<f64>().ok())
-        .sum();
-
-    soma / candles.len() as f64
-}
-
 fn calculate_amplitude_ma_200(candles: &[Candlestick], current_price_str: &str) -> String {
     if candles.len() < 200 {
         return "0.0".into();
@@ -123,6 +114,15 @@ fn calculate_amplitude_ma_200(candles: &[Candlestick], current_price_str: &str) 
     }
     let amplitude = (current_price.ln() - oma.ln()) * 100.0;
     format!("{:.2}", amplitude)
+}
+
+pub fn calculate_moving_average(candles: &[Candlestick]) -> f64 {
+    let soma: f64 = candles
+        .iter()
+        .filter_map(|c| c.close_price.parse::<f64>().ok())
+        .sum();
+
+    soma / candles.len() as f64
 }
 
 fn calculate_performance_24(candles: &[Candlestick]) -> f64 {

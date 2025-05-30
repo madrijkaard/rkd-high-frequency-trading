@@ -1,6 +1,7 @@
 ﻿spy = true
 limit_operations = 3
 money = 30.0
+gain = 30.0
 cryptos = [
   "ETHUSDT", "AVAXUSDT", "ADAUSDT", "LINKUSDT", "DOTUSDT",
   "ATOMUSDT", "GRTUSDT", "SANDUSDT", "MANAUSDT", "ALGOUSDT",
@@ -27,4 +28,4 @@ future_url_v2 = "https://fapi.binance.com/fapi/v2"
 interval = "1h"
 limit = 271
 leverage = 1
-decide = true
+decide = false

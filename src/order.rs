@@ -1,4 +1,4 @@
-﻿use crate::candlestick::{get_current_btc_price, get_lot_size_info};
+﻿use crate::binance::{get_current_price, get_lot_size_info};
 use crate::credential::get_credentials;
 use crate::dto::OrderResponse;
 use crate::config::{BinanceSettings, Settings};
@@ -69,7 +69,7 @@ pub async fn execute_future_order(
     let timestamp = (get_timestamp() as i64 + offset) as u64;
     let timestamp_str = timestamp.to_string();
 
-    let preco_btc = get_current_btc_price(settings, symbol).await?;
+    let preco_btc = get_current_price(settings, symbol).await?;
     let lot_size_info = get_lot_size_info(settings, symbol).await?;
 
     let config = Settings::load();

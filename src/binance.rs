@@ -2,6 +2,12 @@ use crate::config::BinanceSettings;
 use crate::dto::{Candlestick, ExchangeInfoResponse, LotSizeFilter, LotSizeInfo};
 use reqwest::Client;
 use serde_json::Value;
+use hmac::{Hmac, Mac};
+use sha2::Sha256;
+use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+type HmacSha256 = Hmac<Sha256>;
 
 pub async fn get_candlesticks(
     base_url: &str,
@@ -58,7 +64,7 @@ pub async fn get_candlesticks(
     Ok(candlesticks)
 }
 
-pub async fn get_current_btc_price(
+pub async fn get_current_price(
     settings: &BinanceSettings,
     symbol: &str,
 ) -> Result<f64, String> {
@@ -128,4 +134,52 @@ pub async fn get_lot_size_info(
     }
 
     Err("Filtro LOT_SIZE nao encontrado".to_string())
+}
+
+pub async fn get_unrealized_profit(
+    binance: &BinanceSettings,
+    symbol: &str,
+    api_key: &str,
+    secret: &str,
+) -> Result<Option<f64>, String> {
+    let ts = now_ms();
+    let query = format!("timestamp={}", ts);
+    let sig = sign(&query, secret);
+    let url = format!("{}/positionRisk?{}&signature={}", binance.future_url_v2, query, sig);
+
+    let mut headers = HeaderMap::new();
+    headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+    headers.insert("X-MBX-APIKEY", HeaderValue::from_str(api_key).unwrap());
+
+    let client = Client::new();
+    let res = client.get(&url).headers(headers).send().await
+        .map_err(|e| format!("Erro HTTP: {:?}", e))?;
+
+    let positions: Vec<serde_json::Value> = res.json().await
+        .map_err(|e| format!("Erro ao interpretar JSON: {:?}", e))?;
+
+    for position in positions {
+        if position["symbol"] == symbol {
+            let amt = position["positionAmt"].as_str().unwrap_or("0").parse::<f64>().unwrap_or(0.0);
+            if amt.abs() > 0.0 {
+                let profit = position["unRealizedProfit"].as_str().unwrap_or("0").parse::<f64>().unwrap_or(0.0);
+                return Ok(Some(profit));
+            }
+        }
+    }
+
+    Ok(None)
+}
+
+fn now_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64
+}
+
+fn sign(query: &str, secret: &str) -> String {
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes()).unwrap();
+    mac.update(query.as_bytes());
+    hex::encode(mac.finalize().into_bytes())
 }

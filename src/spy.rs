@@ -1,4 +1,4 @@
-use crate::candlestick::get_candlesticks;
+use crate::binance::get_candlesticks;
 use crate::trade::generate_trade;
 use crate::dto::Trade;
 use futures::future::join_all;

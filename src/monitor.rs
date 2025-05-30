@@ -2,7 +2,7 @@ use crate::dto::Trade;
 use crate::blockchain::get_current_blockchain_symbols;
 use prettytable::{Table, Row, Cell, Attr, color};
 
-pub fn log_spied_cryptos(trades: &[Trade]) {
+pub fn monitor_cryptos(trades: &[Trade]) {
     fn find_zone_index(trade: &Trade) -> Option<usize> {
         let price = parse(&trade.current_price);
         let zones = vec![

@@ -18,6 +18,7 @@ pub struct Settings {
     pub limit_operations: usize,
     pub cryptos: Vec<String>,
     pub money: f64,
+    pub gain: f64,
 }
 
 impl Settings {

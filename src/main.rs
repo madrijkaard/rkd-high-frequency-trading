@@ -5,15 +5,16 @@ mod config;
 mod blockchain;
 mod order;
 mod balance;
-mod candlestick;
+mod binance;
 mod credential;
 mod schedule;
 mod leverage;
 mod decide;
-mod log;
+mod monitor;
 mod status_trade;
 mod spy;
 mod swap;
+mod crypto_candidate;
 
 use actix_web::{App, HttpServer};
 use api::{
