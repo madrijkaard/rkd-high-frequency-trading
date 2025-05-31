@@ -158,3 +158,37 @@ pub struct OpenOrderRequest {
 pub struct SymbolRequest {
     pub symbol: String,
 }
+
+//
+// MONITORAMENTO (JSON) DTOs
+//
+
+#[derive(Debug, Serialize)]
+pub struct TradeMonitorResponse {
+    pub timestamp: String,
+    pub trades: Vec<TradeMonitorItem>,
+    pub zone_distribution: Vec<ZoneCount>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TradeMonitorItem {
+    pub symbol: String,
+    pub zone: Option<String>,
+    pub performance_24: f64,
+    pub performance_btc_24: f64,
+    pub amplitude_ma_200: f64,
+    pub log_amplitude: f64,
+    pub log_position: f64,
+    pub volume: f64,
+    pub quote_volume: f64,
+    pub trades_count: f64,
+    pub taker_buy_base_volume: f64,
+    pub taker_buy_quote_volume: f64,
+    pub is_active: bool,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ZoneCount {
+    pub zone: String,
+    pub count: usize,
+}

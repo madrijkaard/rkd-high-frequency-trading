@@ -1,17 +1,12 @@
 use crate::blockchain::get_current_blockchain_symbols;
 use crate::config::Settings;
-use crate::dto::{Bias, Trade};
+use crate::dto::{Bias, Trade, TradeMonitorItem, TradeMonitorResponse, ZoneCount};
 use prettytable::{color, Attr, Cell, Row, Table};
+use chrono::Local;
 
-pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
+pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) -> TradeMonitorResponse {
     fn parse(value: &str) -> f64 {
         value.parse::<f64>().unwrap_or(0.0)
-    }
-
-    fn max_min(values: &[f64]) -> (f64, f64) {
-        let max = values.iter().cloned().fold(f64::MIN, f64::max);
-        let min = values.iter().cloned().fold(f64::MAX, f64::min);
-        (max, min)
     }
 
     fn find_zone_index(trade: &Trade) -> Option<usize> {
@@ -56,36 +51,14 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         }
     }
 
-    fn highlight_cell(value: &str, max: f64, min: f64) -> Cell {
-        let val = parse(value);
-        let mut cell = Cell::new(value);
-        if val == max {
-            cell = cell.with_style(Attr::ForegroundColor(color::GREEN));
-        } else if val == min {
-            cell = cell.with_style(Attr::ForegroundColor(color::RED));
+    fn color_unique(index: usize, max_index: usize, min_index: usize) -> Option<Attr> {
+        if index == max_index {
+            Some(Attr::ForegroundColor(color::GREEN))
+        } else if index == min_index {
+            Some(Attr::ForegroundColor(color::RED))
+        } else {
+            None
         }
-        cell
-    }
-
-    fn highlight_f64_cell(value: &str, max: f64, min: f64) -> Cell {
-        let val = parse(value);
-        let mut cell = Cell::new(&format!("{:.2}", val));
-        if val == max {
-            cell = cell.with_style(Attr::ForegroundColor(color::GREEN));
-        } else if val == min {
-            cell = cell.with_style(Attr::ForegroundColor(color::RED));
-        }
-        cell
-    }
-
-    fn highlight_val_cell(val: f64, max: f64, min: f64) -> Cell {
-        let mut cell = Cell::new(&format!("{:.2}", val));
-        if val == max {
-            cell = cell.with_style(Attr::ForegroundColor(color::GREEN));
-        } else if val == min {
-            cell = cell.with_style(Attr::ForegroundColor(color::RED));
-        }
-        cell
     }
 
     fn calc_log_ampl(min: f64, max: f64) -> f64 {
@@ -102,8 +75,32 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         ((price.ln() - min.ln()) / (max.ln() - min.ln())) * 100.0
     }
 
+    fn extract_column(values: &[(f64, f64, f64, f64, f64, f64, f64, f64, f64, f64)], index: usize) -> Vec<f64> {
+        values.iter().map(|v| match index {
+            0 => v.0,
+            1 => v.1,
+            2 => v.2,
+            3 => v.3,
+            4 => v.4,
+            5 => v.5,
+            6 => v.6,
+            7 => v.7,
+            8 => v.8,
+            9 => v.9,
+            _ => 0.0,
+        }).collect()
+    }
+
+    fn max_index(v: &[f64]) -> usize {
+        v.iter().enumerate().max_by(|a, b| a.1.partial_cmp(b.1).unwrap()).map(|(i, _)| i).unwrap_or(0)
+    }
+
+    fn min_index(v: &[f64]) -> usize {
+        v.iter().enumerate().min_by(|a, b| a.1.partial_cmp(b.1).unwrap()).map(|(i, _)| i).unwrap_or(0)
+    }
+
     print!("\x1B[2J\x1B[1;1H");
-    let now = chrono::Local::now();
+    let now = Local::now();
     println!("[{}] - Criptos monitoradas:", now.format("%Y-%m-%d %H:%M:%S"));
 
     let mut table = Table::new();
@@ -133,78 +130,122 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         ]));
     }
 
-    let mut perf_vals = vec![];
-    let mut btc_vals = vec![];
-    let mut amp_vals = vec![];
-    let mut log_ampls = vec![];
-    let mut log_positions = vec![];
-    let mut volumes = vec![];
-    let mut quote_volumes = vec![];
-    let mut trades_counts = vec![];
-    let mut taker_base_volumes = vec![];
-    let mut taker_quote_volumes = vec![];
-    let mut zone_counts = [0usize; 8];
-
-    for t in trades {
-        perf_vals.push(parse(&t.performance_24));
-        btc_vals.push(parse(&t.performance_btc_24));
-        amp_vals.push(parse(&t.amplitude_ma_200));
-
+    let values: Vec<(
+        f64, f64, f64, f64, f64, f64, f64, f64, f64, f64,
+    )> = trades.iter().map(|t| {
         let min = parse(&t.zone_min);
         let max = parse(&t.zone_max);
-        log_ampls.push(calc_log_ampl(min, max));
-        log_positions.push(calc_log_position(parse(&t.current_price), min, max));
+        let current = parse(&t.current_price);
+        (
+            parse(&t.performance_24),
+            parse(&t.performance_btc_24),
+            parse(&t.amplitude_ma_200),
+            calc_log_ampl(min, max),
+            calc_log_position(current, min, max),
+            parse(&t.volume),
+            parse(&t.quote_asset_volume),
+            parse(&t.number_of_trades),
+            parse(&t.taker_buy_base_asset_volume),
+            parse(&t.taker_buy_quote_asset_volume),
+        )
+    }).collect();
 
-        volumes.push(parse(&t.volume));
-        quote_volumes.push(parse(&t.quote_asset_volume));
-        trades_counts.push(parse(&t.number_of_trades));
-        taker_base_volumes.push(parse(&t.taker_buy_base_asset_volume));
-        taker_quote_volumes.push(parse(&t.taker_buy_quote_asset_volume));
-    }
+    // extrai colunas e encontra índices únicos
+    let perf_col = extract_column(&values, 0);
+    let btc_col = extract_column(&values, 1);
+    let ma200_col = extract_column(&values, 2);
+    let ampl_col = extract_column(&values, 3);
+    let pos_col = extract_column(&values, 4);
+    let volume_col = extract_column(&values, 5);
+    let quote_col = extract_column(&values, 6);
+    let trades_col = extract_column(&values, 7);
+    let taker_base_col = extract_column(&values, 8);
+    let taker_quote_col = extract_column(&values, 9);
 
-    let (max_perf, min_perf) = max_min(&perf_vals);
-    let (max_btc_perf, min_btc_perf) = max_min(&btc_vals);
-    let (max_amplitude, min_amplitude) = max_min(&amp_vals);
-    let (max_log_ampl, min_log_ampl) = max_min(&log_ampls);
-    let (max_pos, min_pos) = max_min(&log_positions);
-    let (max_vol, min_vol) = max_min(&volumes);
-    let (max_quote_vol, min_quote_vol) = max_min(&quote_volumes);
-    let (max_trades, min_trades) = max_min(&trades_counts);
-    let (max_taker_base, min_taker_base) = max_min(&taker_base_volumes);
-    let (max_taker_quote, min_taker_quote) = max_min(&taker_quote_volumes);
+    let max_perf = max_index(&perf_col);
+    let min_perf = min_index(&perf_col);
+    let max_btc = max_index(&btc_col);
+    let min_btc = min_index(&btc_col);
+    let max_ma200 = max_index(&ma200_col);
+    let min_ma200 = min_index(&ma200_col);
+    let max_ampl = max_index(&ampl_col);
+    let min_ampl = min_index(&ampl_col);
+    let max_pos = max_index(&pos_col);
+    let min_pos = min_index(&pos_col);
+    let max_vol = max_index(&volume_col);
+    let min_vol = min_index(&volume_col);
+    let max_quote = max_index(&quote_col);
+    let min_quote = min_index(&quote_col);
+    let max_trades = max_index(&trades_col);
+    let min_trades = min_index(&trades_col);
+    let max_taker_base = max_index(&taker_base_col);
+    let min_taker_base = min_index(&taker_base_col);
+    let max_taker_quote = max_index(&taker_quote_col);
+    let min_taker_quote = min_index(&taker_quote_col);
 
     let active_symbols = get_current_blockchain_symbols();
+    let mut json_items = vec![];
+    let mut zone_counts = [0usize; 8];
 
-    for (idx, trade) in trades.iter().enumerate() {
-        let mut symbol_cell = Cell::new(&trade.symbol);
-        if active_symbols.contains(&trade.symbol) {
-            symbol_cell = symbol_cell.with_style(Attr::ForegroundColor(color::YELLOW));
-        }
-
-        let zone_index = find_zone_index(trade);
+    for (i, t) in trades.iter().enumerate() {
+        let zone_index = find_zone_index(t);
         if let Some(z) = zone_index {
             zone_counts[z] += 1;
         }
 
+        let mut symbol_cell = Cell::new(&t.symbol);
+        if active_symbols.contains(&t.symbol) {
+            symbol_cell = symbol_cell.with_style(Attr::ForegroundColor(color::YELLOW));
+        }
+
         let mut row = vec![
             symbol_cell,
-            zone_label_cell(zone_index, &trade.bias),
-            highlight_cell(&trade.performance_24, max_perf, min_perf),
-            highlight_cell(&trade.performance_btc_24, max_btc_perf, min_btc_perf),
-            highlight_cell(&trade.amplitude_ma_200, max_amplitude, min_amplitude),
+            zone_label_cell(zone_index, &t.bias),
         ];
 
+        macro_rules! push_cell {
+            ($vec:expr, $col:expr, $i:expr, $max:expr, $min:expr) => {
+                {
+                    let mut cell = Cell::new(&format!("{:.2}", $col[$i]));
+                    if let Some(attr) = color_unique($i, $max, $min) {
+                        cell = cell.with_style(attr);
+                    }
+                    $vec.push(cell);
+                }
+            };
+        }
+
+        push_cell!(row, perf_col, i, max_perf, min_perf);
+        push_cell!(row, btc_col, i, max_btc, min_btc);
+        push_cell!(row, ma200_col, i, max_ma200, min_ma200);
+
         if show_details {
-            row.push(highlight_val_cell(log_ampls[idx], max_log_ampl, min_log_ampl));
-            row.push(highlight_val_cell(log_positions[idx], max_pos, min_pos));
-            row.push(highlight_f64_cell(&trade.volume, max_vol, min_vol));
-            row.push(highlight_f64_cell(&trade.quote_asset_volume, max_quote_vol, min_quote_vol));
-            row.push(highlight_f64_cell(&trade.number_of_trades, max_trades, min_trades));
-            row.push(highlight_f64_cell(&trade.taker_buy_base_asset_volume, max_taker_base, min_taker_base));
-            row.push(highlight_f64_cell(&trade.taker_buy_quote_asset_volume, max_taker_quote, min_taker_quote));
+            push_cell!(row, ampl_col, i, max_ampl, min_ampl);
+            push_cell!(row, pos_col, i, max_pos, min_pos);
+            push_cell!(row, volume_col, i, max_vol, min_vol);
+            push_cell!(row, quote_col, i, max_quote, min_quote);
+            push_cell!(row, trades_col, i, max_trades, min_trades);
+            push_cell!(row, taker_base_col, i, max_taker_base, min_taker_base);
+            push_cell!(row, taker_quote_col, i, max_taker_quote, min_taker_quote);
         }
 
         table.add_row(Row::new(row));
+
+        json_items.push(TradeMonitorItem {
+            symbol: t.symbol.clone(),
+            zone: zone_index.map(|i| format!("Z{}", i + 1)),
+            performance_24: perf_col[i],
+            performance_btc_24: btc_col[i],
+            amplitude_ma_200: ma200_col[i],
+            log_amplitude: ampl_col[i],
+            log_position: pos_col[i],
+            volume: volume_col[i],
+            quote_volume: quote_col[i],
+            trades_count: trades_col[i],
+            taker_buy_base_volume: taker_base_col[i],
+            taker_buy_quote_volume: taker_quote_col[i],
+            is_active: active_symbols.contains(&t.symbol),
+        });
     }
 
     table.printstd();
@@ -218,4 +259,19 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
             .collect::<Vec<_>>()
             .join(" | ")
     );
+
+    let json_distribution: Vec<ZoneCount> = zone_counts
+        .iter()
+        .enumerate()
+        .map(|(i, count)| ZoneCount {
+            zone: format!("Z{}", i + 1),
+            count: *count,
+        })
+        .collect();
+
+    TradeMonitorResponse {
+        timestamp: now.to_rfc3339(),
+        trades: json_items,
+        zone_distribution: json_distribution,
+    }
 }

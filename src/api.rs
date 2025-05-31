@@ -9,6 +9,8 @@ use crate::blockchain::{get_blockchain_for, get_last_trade_for, get_all_symbols,
 use crate::spy::spy_cryptos;
 use crate::monitor::monitor_cryptos;
 
+use std::fmt::Write;
+
 #[post("/trades/start")]
 pub async fn post_trades_start() -> impl Responder {
     let scheduler = get_scheduler();
@@ -165,7 +167,7 @@ pub async fn get_chain_validity(path: web::Path<String>) -> impl Responder {
 }
 
 #[get("/trades/monitor")]
-pub async fn get_trades_monitor() -> impl Responder {
+pub async fn get_trades_monitor(query: web::Query<std::collections::HashMap<String, String>>) -> impl Responder {
     let settings = Settings::load();
 
     let trades = spy_cryptos(
@@ -176,6 +178,29 @@ pub async fn get_trades_monitor() -> impl Responder {
     )
     .await;
 
-    let monitor_result = monitor_cryptos(&trades, &settings);
-    HttpResponse::Ok().json(monitor_result)
+    let response = monitor_cryptos(&trades, &settings);
+
+    match query.get("format").map(|f| f.as_str()) {
+        Some("text") => {
+            let mut buffer = String::new();
+            writeln!(&mut buffer, "[{}] - Criptos monitoradas:", response.timestamp).unwrap();
+
+            buffer.push_str("\n(tabela disponível apenas no terminal)\n");
+            writeln!(
+                &mut buffer,
+                "\nDistribuicao por zona: {}",
+                response.zone_distribution
+                    .iter()
+                    .map(|z| format!("{}: {}", z.zone, z.count))
+                    .collect::<Vec<_>>()
+                    .join(" | ")
+            )
+            .unwrap();
+
+            HttpResponse::Ok()
+                .content_type("text/plain; charset=utf-8")
+                .body(buffer)
+        }
+        _ => HttpResponse::Ok().json(response),
+    }
 }
