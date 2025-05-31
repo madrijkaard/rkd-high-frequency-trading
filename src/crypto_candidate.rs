@@ -1,5 +1,5 @@
 use crate::blockchain::{
-    add_trade_block, get_current_blockchain_symbols, is_blockchain_limit_reached
+    add_trade_block, get_current_blockchain_symbols, is_blockchain_limit_reached,
 };
 use crate::config::Settings;
 use crate::decide::decide;
@@ -40,28 +40,32 @@ pub async fn choose_candidate_cryptos(trades: Vec<Trade>, settings: &Settings) {
     let filtered: Vec<Trade> = trades
         .into_iter()
         .filter(|t| !current_symbols.contains(&t.symbol))
-        .filter(|t| match t.bias {
-            Bias::Bullish => {
-                let p = parse(&t.current_price);
-                let z1 = parse(&t.zone_1);
-                let z6 = parse(&t.zone_6);
-                let z7 = parse(&t.zone_7);
-                p < z1 || (p > z6 && p < z7)
+        .filter(|t| {
+            let p = parse(&t.current_price);
+            match t.bias {
+                Bias::Bullish => {
+                    let z1 = parse(&t.zone_1);
+                    let z6 = parse(&t.zone_6);
+                    let z7 = parse(&t.zone_7);
+                    p < z1 || (p > z6 && p < z7)
+                }
+                Bias::Bearish => {
+                    let z1 = parse(&t.zone_1);
+                    let z2 = parse(&t.zone_2);
+                    let z7 = parse(&t.zone_7);
+                    p > z7 || (p < z2 && p > z1)
+                }
+                _ => false,
             }
-            Bias::Bearish => {
-                let p = parse(&t.current_price);
-                let z2 = parse(&t.zone_2);
-                let z3 = parse(&t.zone_3);
-                let z8 = parse(&t.zone_max);
-                p > z8 || (p < z2 && p > z3)
-            }
-            _ => false,
         })
         .collect();
 
     let mut bullish_z7 = filtered
         .iter()
-        .filter(|t| matches!(t.bias, Bias::Bullish) && parse(&t.current_price) > parse(&t.zone_6) && parse(&t.current_price) < parse(&t.zone_7))
+        .filter(|t| matches!(t.bias, Bias::Bullish) && {
+            let p = parse(&t.current_price);
+            p > parse(&t.zone_6) && p < parse(&t.zone_7)
+        })
         .max_by(|a, b| parse(&a.performance_btc_24).partial_cmp(&parse(&b.performance_btc_24)).unwrap_or(std::cmp::Ordering::Equal))
         .cloned();
 
@@ -73,13 +77,16 @@ pub async fn choose_candidate_cryptos(trades: Vec<Trade>, settings: &Settings) {
 
     let mut bearish_z2 = filtered
         .iter()
-        .filter(|t| matches!(t.bias, Bias::Bearish) && parse(&t.current_price) < parse(&t.zone_2) && parse(&t.current_price) > parse(&t.zone_3))
+        .filter(|t| matches!(t.bias, Bias::Bearish) && {
+            let p = parse(&t.current_price);
+            p < parse(&t.zone_2) && p > parse(&t.zone_1)
+        })
         .min_by(|a, b| parse(&a.performance_btc_24).partial_cmp(&parse(&b.performance_btc_24)).unwrap_or(std::cmp::Ordering::Equal))
         .cloned();
 
     let mut bearish_z8 = filtered
         .iter()
-        .filter(|t| matches!(t.bias, Bias::Bearish) && parse(&t.current_price) > parse(&t.zone_max))
+        .filter(|t| matches!(t.bias, Bias::Bearish) && parse(&t.current_price) > parse(&t.zone_7))
         .max_by(|a, b| parse(&a.amplitude_ma_200).partial_cmp(&parse(&b.amplitude_ma_200)).unwrap_or(std::cmp::Ordering::Equal))
         .cloned();
 
@@ -90,10 +97,7 @@ pub async fn choose_candidate_cryptos(trades: Vec<Trade>, settings: &Settings) {
     if let Some(t) = bearish_z8.take() { final_candidates.push(t); }
 
     if final_candidates.is_empty() {
-        println!("Nenhuma cripto passou nos filtros finais.");
         return;
-    } else {
-        println!("Criptos candidatas apos filtros finais: {:?}", final_candidates.iter().map(|t| t.symbol.clone()).collect::<Vec<_>>());
     }
 
     if let Some(selected) = {

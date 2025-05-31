@@ -1,10 +1,22 @@
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum Bias {
     Bullish,
     Bearish,
     None,
+}
+
+impl fmt::Display for Bias {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let text = match self {
+            Bias::Bullish => "Bullish",
+            Bias::Bearish => "Bearish",
+            Bias::None => "None",
+        };
+        write!(f, "{}", text)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

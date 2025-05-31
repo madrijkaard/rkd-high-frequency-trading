@@ -30,6 +30,7 @@ use api::{
     post_close_all_positions,
     put_leverage,
     get_trades_spy,
+    get_trades_monitor, // <-- NOVO
 };
 
 #[actix_web::main]
@@ -50,6 +51,7 @@ async fn main() -> std::io::Result<()> {
             .service(post_close_all_positions)
             .service(put_leverage)
             .service(get_trades_spy)
+            .service(get_trades_monitor) // <-- NOVO
     })
     .bind(("127.0.0.1", 8080))?
     .run()

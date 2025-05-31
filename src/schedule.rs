@@ -68,7 +68,7 @@ async fn execute_trade(settings: &Settings) {
     )
     .await;
 
-    monitor_cryptos(&trades);
+    monitor_cryptos(&trades, settings);
     process_existing_cryptos(&trades, settings).await;
     choose_candidate_cryptos(trades, settings).await;
 }

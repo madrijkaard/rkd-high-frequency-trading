@@ -19,6 +19,7 @@ pub struct Settings {
     pub cryptos: Vec<String>,
     pub money: f64,
     pub gain: f64,
+    pub show_details_monitor: bool,
 }
 
 impl Settings {

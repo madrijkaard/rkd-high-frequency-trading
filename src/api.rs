@@ -7,6 +7,7 @@ use crate::order::{close_all_positions, execute_future_order};
 use crate::schedule::get_scheduler;
 use crate::blockchain::{get_blockchain_for, get_last_trade_for, get_all_symbols, BLOCKCHAIN};
 use crate::spy::spy_cryptos;
+use crate::monitor::monitor_cryptos;
 
 #[post("/trades/start")]
 pub async fn post_trades_start() -> impl Responder {
@@ -161,4 +162,20 @@ pub async fn get_chain_validity(path: web::Path<String>) -> impl Responder {
         }
         None => HttpResponse::NotFound().body("Blockchain não encontrada"),
     }
+}
+
+#[get("/trades/monitor")]
+pub async fn get_trades_monitor() -> impl Responder {
+    let settings = Settings::load();
+
+    let trades = spy_cryptos(
+        &settings.binance.base_url,
+        &settings.binance.interval,
+        settings.binance.limit,
+        settings.cryptos.clone(),
+    )
+    .await;
+
+    let monitor_result = monitor_cryptos(&trades, &settings);
+    HttpResponse::Ok().json(monitor_result)
 }

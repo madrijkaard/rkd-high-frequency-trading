@@ -2,6 +2,7 @@
 limit_operations = 3
 money = 30.0
 gain = 30.0
+show_details_monitor = true
 cryptos = [
   "ETHUSDT", "AVAXUSDT", "ADAUSDT", "LINKUSDT", "DOTUSDT",
   "ATOMUSDT", "GRTUSDT", "SANDUSDT", "MANAUSDT", "ALGOUSDT",
