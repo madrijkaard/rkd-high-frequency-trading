@@ -28,6 +28,11 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
             performance_24: "0.0".into(),
             amplitude_ma_200: "0.0".into(),
             performance_btc_24: "0.0".into(),
+            volume: "0.0".into(),
+            quote_asset_volume: "0.0".into(),
+            number_of_trades: "0.0".into(),
+            taker_buy_base_asset_volume: "0.0".into(),
+            taker_buy_quote_asset_volume: "0.0".into(),
         };
     }
 
@@ -60,6 +65,24 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
         .map(|c| c.close_price.clone())
         .unwrap_or_else(|| "0.0".to_string());
 
+    let (volume, quote_asset_volume, number_of_trades, taker_buy_base_asset_volume, taker_buy_quote_asset_volume) =
+    match candlesticks.last() {
+        Some(candle) => (
+            candle.volume.clone(),
+            candle.quote_asset_volume.clone(),
+            candle.number_of_trades.to_string(),
+            candle.taker_buy_base_asset_volume.clone(),
+            candle.taker_buy_quote_asset_volume.clone(),
+        ),
+        None => (
+            "0.0".into(),
+            "0.0".into(),
+            "0".into(),
+            "0.0".into(),
+            "0.0".into(),
+        ),
+    };
+
     let log_min = min_low.ln();
     let log_max = max_high.ln();
     let log_zone_4 = (log_min + log_max) / 2.0;
@@ -72,8 +95,8 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
 
     let performance_24_val = calculate_performance_24(&candlesticks);
     let performance_24 = format!("{:.2}", performance_24_val);
-    let performance_btc_24 = calculate_performance_btc_24(&reference_candles, performance_24_val);
     let amplitude_ma_200 = calculate_amplitude_ma_200(&candlesticks, &current_price);
+    let performance_btc_24 = calculate_performance_btc_24(&reference_candles, performance_24_val);
 
     let trade = Trade {
         symbol: symbol.clone(),
@@ -95,6 +118,11 @@ pub fn generate_trade(symbol: String, candlesticks: Vec<Candlestick>, reference_
         performance_24,
         performance_btc_24,
         amplitude_ma_200,
+        volume,
+        quote_asset_volume,
+        number_of_trades,
+        taker_buy_base_asset_volume,
+        taker_buy_quote_asset_volume,
     };
 
     match get_last_trade_for(&symbol) {

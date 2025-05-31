@@ -56,6 +56,11 @@ pub struct Trade {
     pub performance_24: String,
     pub performance_btc_24: String,
     pub amplitude_ma_200: String,
+    pub volume: String,
+    pub quote_asset_volume: String,
+    pub number_of_trades: String,
+    pub taker_buy_base_asset_volume: String,
+    pub taker_buy_quote_asset_volume: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]

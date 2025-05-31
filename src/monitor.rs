@@ -67,6 +67,17 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         cell
     }
 
+    fn highlight_f64_cell(value: &str, max: f64, min: f64) -> Cell {
+        let val = parse(value);
+        let mut cell = Cell::new(&format!("{:.2}", val));
+        if val == max {
+            cell = cell.with_style(Attr::ForegroundColor(color::GREEN));
+        } else if val == min {
+            cell = cell.with_style(Attr::ForegroundColor(color::RED));
+        }
+        cell
+    }
+
     fn highlight_val_cell(val: f64, max: f64, min: f64) -> Cell {
         let mut cell = Cell::new(&format!("{:.2}", val));
         if val == max {
@@ -106,6 +117,11 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
             Cell::new("MA200"),
             Cell::new("Ampl"),
             Cell::new("Pos%"),
+            Cell::new("Volume"),
+            Cell::new("Quote Volume"),
+            Cell::new("Trades"),
+            Cell::new("Taker Base"),
+            Cell::new("Taker Quote"),
         ]));
     } else {
         table.add_row(Row::new(vec![
@@ -121,8 +137,13 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
     let mut btc_vals = vec![];
     let mut amp_vals = vec![];
     let mut log_ampls = vec![];
-    let mut zone_counts = [0usize; 8];
     let mut log_positions = vec![];
+    let mut volumes = vec![];
+    let mut quote_volumes = vec![];
+    let mut trades_counts = vec![];
+    let mut taker_base_volumes = vec![];
+    let mut taker_quote_volumes = vec![];
+    let mut zone_counts = [0usize; 8];
 
     for t in trades {
         perf_vals.push(parse(&t.performance_24));
@@ -133,6 +154,12 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         let max = parse(&t.zone_max);
         log_ampls.push(calc_log_ampl(min, max));
         log_positions.push(calc_log_position(parse(&t.current_price), min, max));
+
+        volumes.push(parse(&t.volume));
+        quote_volumes.push(parse(&t.quote_asset_volume));
+        trades_counts.push(parse(&t.number_of_trades));
+        taker_base_volumes.push(parse(&t.taker_buy_base_asset_volume));
+        taker_quote_volumes.push(parse(&t.taker_buy_quote_asset_volume));
     }
 
     let (max_perf, min_perf) = max_min(&perf_vals);
@@ -140,6 +167,11 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
     let (max_amplitude, min_amplitude) = max_min(&amp_vals);
     let (max_log_ampl, min_log_ampl) = max_min(&log_ampls);
     let (max_pos, min_pos) = max_min(&log_positions);
+    let (max_vol, min_vol) = max_min(&volumes);
+    let (max_quote_vol, min_quote_vol) = max_min(&quote_volumes);
+    let (max_trades, min_trades) = max_min(&trades_counts);
+    let (max_taker_base, min_taker_base) = max_min(&taker_base_volumes);
+    let (max_taker_quote, min_taker_quote) = max_min(&taker_quote_volumes);
 
     let active_symbols = get_current_blockchain_symbols();
 
@@ -165,6 +197,11 @@ pub fn monitor_cryptos(trades: &[Trade], settings: &Settings) {
         if show_details {
             row.push(highlight_val_cell(log_ampls[idx], max_log_ampl, min_log_ampl));
             row.push(highlight_val_cell(log_positions[idx], max_pos, min_pos));
+            row.push(highlight_f64_cell(&trade.volume, max_vol, min_vol));
+            row.push(highlight_f64_cell(&trade.quote_asset_volume, max_quote_vol, min_quote_vol));
+            row.push(highlight_f64_cell(&trade.number_of_trades, max_trades, min_trades));
+            row.push(highlight_f64_cell(&trade.taker_buy_base_asset_volume, max_taker_base, min_taker_base));
+            row.push(highlight_f64_cell(&trade.taker_buy_quote_asset_volume, max_taker_quote, min_taker_quote));
         }
 
         table.add_row(Row::new(row));

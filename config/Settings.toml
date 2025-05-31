@@ -1,13 +1,13 @@
 ﻿spy = true
-limit_operations = 2
+limit_operations = 7
 money = 30.0
 gain = 30.0
-show_details_monitor = false
+show_details_monitor = true
 cryptos = [
   "ETHUSDT", "AVAXUSDT", "ADAUSDT", "LINKUSDT", "DOTUSDT",
   "ATOMUSDT", "GRTUSDT", "SANDUSDT", "MANAUSDT", "ALGOUSDT",
   "INJUSDT", "NEARUSDT", "SUIUSDT", "UNIUSDT", "ENAUSDT", "SOLUSDT",
-  "BTCUSDT", "XRPUSDT", "BNBUSDT", "DOGEUSDT", "TRXUSDT",
+  "XRPUSDT", "BNBUSDT", "DOGEUSDT", "TRXUSDT",
   "BCHUSDT", "TONUSDT", "LTCUSDT", "XMRUSDT", "PIUSDT",
   "AAVEUSDT", "TAOUSDT", "APTUSDT", "CROUSDT", "XDCUSDT",
   "OKBUSDT", "ICPUSDT", "ETCUSDT", "KASUSDT", "TIAUSDT",
@@ -29,4 +29,4 @@ future_url_v2 = "https://fapi.binance.com/fapi/v2"
 interval = "1h"
 limit = 271
 leverage = 1
-decide = true
+decide = false
